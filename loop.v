@@ -18,10 +18,10 @@ _loop
 
   once create(): _loop
   {
-    let _handle = array[u8]::fill(:::platform_thread_size);
+    let _handle = array[u8]::fill(:::platform_thread_size());
     let _cb = ffi::callback (arg: ffi::ptr): none ->
     {
-      :::uv_run(:::uv_default_loop, 0); // UV_RUN_DEFAULT
+      :::uv_run(:::uv_default_loop(), 0); // UV_RUN_DEFAULT
     }
 
     :::uv_thread_create(_handle, _cb, none);
@@ -31,7 +31,7 @@ _loop
   join(self: _loop): none
   {
     :::uv_thread_join(self._handle);
-    :::uv_loop_close :::uv_default_loop;
+    :::uv_loop_close(:::uv_default_loop());
     self._cb.free
   }
 }

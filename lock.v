@@ -7,7 +7,7 @@ _lock
     cown(new { _batching = false })
   }
 
-  run[A, B](some: A, handler: (some: B)->none): none
+  run[A, B](some: A, handler: B->none): none
   {
     when (_lock, some._c) (l, c) ->
     {
@@ -27,7 +27,7 @@ _lock
     _semaphore::runtime.wait;
     self._batching = true;
 
-    when (_lock, self._c) (l, c) ->
+    when _lock l ->
     {
       (*l)._batching = false;
       _semaphore::loop.post

@@ -29,16 +29,16 @@ _semaphore
 
   post(self: _semaphore): none
   {
-    :::uv_sem_post self._handle
+    :::uv_sem_post(self._handle)
   }
 
   wait(self: _semaphore): none
   {
-    :::uv_sem_wait self._handle
+    :::uv_sem_wait(self._handle)
   }
 
   final(self: _semaphore): none
   {
-    :::uv_sem_destroy self._handle
+    :::uv_sem_destroy(self._handle)
   }
 }

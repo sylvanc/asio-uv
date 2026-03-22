@@ -11,14 +11,14 @@ _async
 
   once create(): _async
   {
-    let _handle = array[u8]::fill(:::uv_handle_size 1); // UV_ASYNC
+    let _handle = array[u8]::fill :::uv_handle_size(1); // UV_ASYNC
     let _cb = ffi::callback (handle: array[u8]): none ->
     {
       _semaphore::runtime.post;
       _semaphore::loop.wait;
     }
 
-    :::uv_async_init(:::uv_default_loop, _handle, _cb);
+    :::uv_async_init(:::uv_default_loop(), _handle, _cb);
     new {_handle, _cb}
   }
 

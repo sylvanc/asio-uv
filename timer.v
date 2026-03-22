@@ -15,7 +15,7 @@ timer
 
     create(): _state
     {
-      let _handle = array[u8]::fill(:::uv_handle_size 13); // UV_TIMER
+      let _handle = array[u8]::fill :::uv_handle_size(13); // UV_TIMER
       let _cb = ffi::callback (handle: array[u8]): none -> {}
       new {_handle, _cb, _active = false}
     }
@@ -30,7 +30,7 @@ timer
         handler self
       }
 
-      :::uv_timer_init(:::uv_default_loop, self._handle)
+      :::uv_timer_init(:::uv_default_loop(), self._handle)
     }
 
     apply(self: _state, timeout: u64): none

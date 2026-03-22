@@ -15,18 +15,18 @@ signal
 
     create(signum: i32, handler: ()->none): _state
     {
-      let _handle = array[u8]::fill(:::uv_handle_size 16); // UV_SIGNAL
+      let _handle = array[u8]::fill :::uv_handle_size(16); // UV_SIGNAL
       let _cb = ffi::callback (handle: array[u8], signum: i32): none ->
       {
         handler()
       }
 
-      new {_signum: signum, _handle, _cb}
+      new {_signum = signum, _handle, _cb}
     }
 
     init(self: _state): none
     {
-      :::uv_signal_init(:::uv_default_loop, self._handle);
+      :::uv_signal_init(:::uv_default_loop(), self._handle);
       :::uv_signal_start(self._handle, self._cb, self._signum);
       :::uv_unref(self._handle)
     }
@@ -49,13 +49,8 @@ signal
   create(signum: i32, handler: ()->none): signal
   {
     let _c = cown _state(signum, handler);
-
-    when (lock, _c) (l, c) ->
-    {
-      (*l).acquire;
-      (*c).init
-    }
-
-    new {_c}
+    let self = new {_c};
+    self _lock::run t -> t.init;
+    self
   }
 }
