@@ -14,7 +14,7 @@ use "libuv.so"
 _loop
 {
   _handle: array[u8];
-  _cb: ffi::callback;
+  _cb: ffi::callback[ffi::ptr->none];
 
   once create(): _loop
   {
@@ -24,7 +24,7 @@ _loop
       :::uv_run(:::uv_default_loop(), 0); // UV_RUN_DEFAULT
     }
 
-    :::uv_thread_create(_handle, _cb, none);
+    :::uv_thread_create(_handle, _cb.raw, none);
     new {_handle, _cb}
   }
 
@@ -32,6 +32,5 @@ _loop
   {
     :::uv_thread_join(self._handle);
     :::uv_loop_close(:::uv_default_loop());
-    self._cb.free
   }
 }

@@ -10,20 +10,19 @@ timer
   _state
   {
     _handle: array[u8];
-    _cb: ffi::callback;
+    _cb: ffi::callback[ffi::ptr->none];
     _active: bool;
 
     create(): _state
     {
       let _handle = array[u8]::fill :::uv_handle_size(13); // UV_TIMER
-      let _cb = ffi::callback (handle: array[u8]): none -> {}
+      let _cb = ffi::callback (handle: ffi::ptr): none -> {}
       new {_handle, _cb, _active = false}
     }
 
     init(self: _state, handler: _state->none): none
     {
-      self._cb.free;
-      self._cb = ffi::callback (handle: array[u8]): none ->
+      self._cb = ffi::callback (handle: ffi::ptr): none ->
       {
         self._active = false;
         ffi::external.remove;
@@ -41,7 +40,7 @@ timer
         ffi::external.add
       }
 
-      :::uv_timer_start(self._handle, self._cb, timeout, 0)
+      :::uv_timer_start(self._handle, self._cb.raw, timeout, 0)
     }
 
     cancel(self: _state): none
@@ -59,11 +58,6 @@ timer
     close(self: _state): none
     {
       :::uv_close(self._handle, none)
-    }
-
-    final(self: _state): none
-    {
-      self._cb.free
     }
   }
 

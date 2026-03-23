@@ -8,7 +8,7 @@ use "libuv.so"
   {
     // Return a fini lambda.
     {
-      _async.close;
+      _async::shutdown.send;
       _loop.join;
     }
   }
