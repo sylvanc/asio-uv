@@ -12,21 +12,34 @@ timer
     _handle: array[u8];
     _cb: ffi::callback[ffi::ptr->none];
     _active: bool;
+    _in_handler: bool;
+    _closed: bool;
 
     create(): _state
     {
       let _handle = array[u8]::fill :::uv_handle_size(13); // UV_TIMER
       let _cb = ffi::callback (handle: ffi::ptr): none -> {}
-      new {_handle, _cb, _active = false}
+      new {_handle, _cb, _active = false, _in_handler = false, _closed = false}
     }
 
     init(self: _state, handler: _state->none): none
     {
       self._cb = ffi::callback (handle: ffi::ptr): none ->
       {
+        if !self._active | self._closed
+        {
+          return
+        }
+
         self._active = false;
-        ffi::external.remove;
-        handler self
+        self._in_handler = true;
+        handler self;
+        self._in_handler = false;
+
+        if !self._active
+        {
+          ffi::external.remove
+        }
       }
 
       :::uv_timer_init(:::uv_default_loop(), self._handle)
@@ -34,30 +47,53 @@ timer
 
     apply(self: _state, timeout: u64): none
     {
-      if !self._active
+      if self._closed
       {
-        self._active = true;
-        ffi::external.add
+        return
       }
 
+      self._activate(true);
       :::uv_timer_start(self._handle, self._cb.raw, timeout, 0)
     }
 
     cancel(self: _state): none
     {
-      if !self._active
+      if !self._active | self._closed
       {
         return
       }
 
-      self._active = false;
-      ffi::external.remove;
-      :::uv_timer_stop(self._handle)
+      :::uv_timer_stop(self._handle);
+      self._activate(false)
     }
 
     close(self: _state): none
     {
+      self._closed = true;
+      self._activate(false);
       :::uv_close(self._handle, none)
+    }
+
+    _activate(self: _state, active: bool): none
+    {
+      if self._active == active
+      {
+        return
+      }
+
+      self._active = active;
+
+      if !self._in_handler
+      {
+        if active
+        {
+          ffi::external.add
+        }
+        else
+        {
+          ffi::external.remove
+        }
+      }
     }
   }
 

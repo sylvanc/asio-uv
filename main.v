@@ -10,7 +10,7 @@ main(): i32
     {
       print "tick";
       count = count + 1;
-      t 100
+      t 500
     }
   }
 
