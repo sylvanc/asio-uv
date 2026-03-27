@@ -31,6 +31,6 @@ _loop
   join(self: _loop): none
   {
     :::uv_thread_join(self._handle);
-    :::uv_loop_close(:::uv_default_loop());
+    :::uv_loop_close(:::uv_default_loop())
   }
 }

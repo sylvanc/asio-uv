@@ -15,5 +15,19 @@ main(): i32
   }
 
   t 0;
+
+  tty (t, data, size) ->
+  {
+    if ((size > 0) & {data(0) == 'q'})
+    {
+      print "quit";
+      t.close;
+    }
+    else
+    {
+      print::out.print "*"
+    }
+  }
+
   0
 }
