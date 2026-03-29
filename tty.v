@@ -8,32 +8,66 @@ use "libuv.so"
 
 tty
 {
+  use resize_cb = (_state, usize, usize)->none;
+
   _state
   {
     _handle: array[u8];
     _r: _stream_reader;
-    _on_read: (_state, array[u8], usize)->none;
-    _on_resize: (_state, usize, usize)->none;
+    _sigwinch: signal;
+    _on_read: stream_read::cb;
+    _on_resize: resize_cb;
     _closed: bool;
+    _in_handler: bool;
 
-    create(_on_read: (_state, array[u8], usize)->none): _state
+    create(_sigwinch: signal, _on_read: stream_read::cb): _state
     {
-      new
+      let _on_resize = (s: _state, w: usize, h: usize): none -> {}
+      let self = new
       {
-        _handle = handle::tty(),
+        _handle = handle::tty,
         _r = _stream_reader,
+        _sigwinch,
         _on_read,
-        _on_resize = ((s: _state, w: usize, h: usize): none -> {}),
-        _closed = false
+        _on_resize,
+        _closed = false,
+        _in_handler = false
       }
+
+      let rcb = (data, size) ->
+      {
+        if self._closed
+        {
+          return
+        }
+
+        self._in_handler = true;
+        self._on_read()(self, data, size);
+        self._in_handler = false;
+
+        if !self._started
+        {
+          ffi::external.remove;
+          ffi::unpin self
+        }
+      }
+
+      :::uv_tty_init(:::uv_default_loop(), self._handle, 0, 0);
+      // :::uv_tty_set_mode(self._handle, 3); // UV_TTY_MODE_RAW_VT
+      :::uv_tty_set_mode(self._handle, 1); // UV_TTY_MODE_RAW
+      ffi::pin self;
+      ffi::external.add;
+      self._r.start(self._handle, rcb);
+      self._resize;
+      self
     }
 
-    on_read(self: _state, h: (_state, array[u8], usize)->none): none
+    on_read(self: _state, h: stream_read::cb): none
     {
       self._on_read = h
     }
 
-    on_resize(self: _state, resize: (_state, usize, usize)->none): none
+    on_resize(self: _state, resize: resize_cb): none
     {
       self._on_resize = resize;
       self._resize
@@ -41,22 +75,19 @@ tty
 
     close(self: _state): none
     {
-      self.final;
-      self._closed = true;
-    }
-
-    _init(self: _state): none
-    {
-      let rcb = (data, size) ->
+      if self._closed
       {
-        self._on_read()(self, data, size)
+        return
       }
 
-      :::uv_tty_init(:::uv_default_loop(), self._handle, 0, 0);
-      // :::uv_tty_set_mode(self._handle, 3); // UV_TTY_MODE_RAW_VT
-      :::uv_tty_set_mode(self._handle, 1); // UV_TTY_MODE_RAW
-      self._r.start(self._handle, rcb);
-      ffi::external.add
+      self._closed = true;
+      self._sigwinch.close;
+
+      self._r.stop(self._handle);
+      :::uv_tty_reset_mode();
+      :::uv_close(self._handle, none);
+      ffi::external.remove;
+      ffi::unpin self
     }
 
     _resize(self: _state): none
@@ -74,10 +105,18 @@ tty
 
     final(self: _state): none
     {
-      if !self._closed
+      if self._closed
       {
-        ffi::external.remove;
+        return
+      }
+
+      self._sigwinch.close;
+
+      if self._started
+      {
         self._r.stop(self._handle);
+        ffi::external.remove;
+        ffi::unpin self;
         :::uv_tty_reset_mode();
         :::uv_close(self._handle, none)
       }
@@ -85,29 +124,27 @@ tty
   }
 
   _c: cown[_state];
-  _sigwinch: signal;
 
-  create(on_read: (_state, array[u8], usize)->none): tty
+  create(on_read: stream_read::cb): tty
   {
-    let _c = cown _state on_read;
-    let _sigwinch = signal 28; // SIGWINCH
-    let self = freeze new {_c, _sigwinch};
-    self _lock::run t -> t._init;
+    let sigwinch = signal 28;
+    let _c = cown _state(sigwinch, on_read);
+    let self = freeze new {_c}
 
-    _sigwinch.init
+    sigwinch.start
     {
-      self _lock::run t -> t._resize;
+      self._resize
     }
 
     self
   }
 
-  on_read(self: _state, h: (_state, array[u8], usize)->none): none
+  on_read(self: tty, h: stream_read::cb): none
   {
     self _lock::run t -> t.on_read h
   }
 
-  on_resize(self: tty, h: (_state, usize, usize)->none): none
+  on_resize(self: tty, h: resize_cb): none
   {
     self _lock::run t -> t.on_resize h
   }
@@ -115,5 +152,10 @@ tty
   close(self: tty): none
   {
     self _lock::run t -> t.close
+  }
+
+  _resize(self: tty): none
+  {
+    self _lock::run t -> t._resize
   }
 }

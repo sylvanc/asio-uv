@@ -15,6 +15,20 @@ use "libuv.so"
   uv_req_set_data = "uv_req_set_data"(uv_req, uv_buf): none;
 }
 
+shape stream_read
+{
+  use cb = (stream_read, array[u8], usize)->none;
+
+  on_read(self: self, h: cb): none;
+  close(self: self): none;
+}
+
+shape stream_write
+{
+  write(self: self, data: array[u8]): none;
+  write(self: self, data: array[u8], size: usize): none;
+}
+
 _req
 {
   req(): uv_req
@@ -40,6 +54,11 @@ _req
   udp_send(): uv_req
   {
     :::malloc(:::uv_req_size(5)) // UV_UDP_SEND
+  }
+
+  fs(): uv_req
+  {
+    :::malloc(:::uv_req_size(6)) // UV_FS
   }
 
   getaddrinfo(): uv_req

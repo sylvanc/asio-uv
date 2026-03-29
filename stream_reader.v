@@ -70,7 +70,8 @@ _stream_reader
   {
     if self._active
     {
-      :::uv_read_stop(handle)
+      :::uv_read_stop(handle);
+      self._active = false
     }
   }
 }

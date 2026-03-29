@@ -32,6 +32,13 @@ _stream_writer
 
     let req = _req::write();
     :::uv_req_set_data(req, buf);
-    :::uv_write(req, handle, buf, 1, self.cb.raw);
+    let status = :::uv_write(req, handle, buf, 1, self.cb.raw);
+
+    if status < 0
+    {
+      ffi::unpin(data);
+      _uv_buf_type.free(buf);
+      _req::free(req)
+    }
   }
 }

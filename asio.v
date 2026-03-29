@@ -8,7 +8,8 @@ use "libuv.so"
 
   init(): ()->none
   {
-    signal::sigpipe;
+    // Block SIGPIPE without keeping the watcher loop-ref'ed.
+    signal(13, {}).unref; // SIGPIPE
 
     // Return a fini lambda.
     {

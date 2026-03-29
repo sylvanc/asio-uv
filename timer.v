@@ -15,15 +15,19 @@ timer
     _in_handler: bool;
     _closed: bool;
 
-    create(): _state
+    create(handler: _state->none): _state
     {
-      let _handle = handle::timer();
+      let _handle = handle::timer;
       let _cb = ffi::callback (handle: ffi::ptr): none -> {}
-      new {_handle, _cb, _active = false, _in_handler = false, _closed = false}
-    }
+      let self = new
+      {
+        _handle,
+        _cb,
+        _active = false,
+        _in_handler = false,
+        _closed = false
+      }
 
-    init(self: _state, handler: _state->none): none
-    {
       self._cb = ffi::callback (handle: ffi::ptr): none ->
       {
         if !self._active | self._closed
@@ -42,7 +46,8 @@ timer
         }
       }
 
-      :::uv_timer_init(:::uv_default_loop(), self._handle)
+      :::uv_timer_init(:::uv_default_loop(), self._handle);
+      self
     }
 
     apply(self: _state, timeout: u64): none
@@ -110,10 +115,7 @@ timer
 
   create(handler: _state->none): timer
   {
-    let _c = cown _state;
-    let self = new {_c};
-    self _lock::run t -> t.init handler;
-    self
+    new {_c = cown _state handler}
   }
 
   apply(self: timer, timeout: u64): none
