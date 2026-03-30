@@ -49,41 +49,14 @@ pipe
       }
     }
 
-    create(_on_read: stream_read::cb): _state
+    start(self: _state, h: stream_read::cb): none
     {
-      let _on_connect = (s: _state, status: i32): none -> {}
-      let _connect_cb = ffi::callback (req: uv_req, status: i32): none -> {}
-
-      new
-      {
-        _handle = handle::pipe,
-        _r = _stream_reader,
-        _w = _stream_writer,
-        _on_read,
-        _on_connect,
-        _connect_cb,
-        _closed = false,
-        _initialized = false,
-        _active = false,
-        _connected = false,
-        _connecting = false,
-        _in_handler = false,
-        _path = ""
-      }
-    }
-
-    on_read(self: _state, h: stream_read::cb): none
-    {
-      self._on_read = h
-    }
-
-    start(self: _state): none
-    {
-      if self._closed | self._active | !self._connected
+      if self._closed | (self._active & self._connected)
       {
         return
       }
 
+      self._on_read = h;
       self._activate true;
       self._begin_reads
     }
@@ -125,8 +98,9 @@ pipe
 
     _fail_read(self: _state): none
     {
+      let eof_size: usize = 0;
       self._in_handler = true;
-      self._on_read()(self, array[u8]::fill(0), 0);
+      self._on_read()(self, array[u8]::fill(eof_size), eof_size);
       self._in_handler = false
     }
 
@@ -144,13 +118,17 @@ pipe
 
     _begin_reads(self: _state): none
     {
-      self._r.start(
+      if !self._r.start(
         self._handle,
         (data, size) ->
         {
           self._dispatch_read(data, size)
-        });
-      self._connected = true
+        })
+      {
+        self._activate false;
+        self._fail_read;
+        self.close
+      }
     }
 
     _ensure_init(self: _state): bool
@@ -307,13 +285,6 @@ pipe
     new {_c}
   }
 
-  create(on_read: stream_read::cb): pipe
-  {
-    let self = pipe;
-    self.on_read on_read;
-    self
-  }
-
   open(fd: i32): pipe
   {
     let self = pipe;
@@ -323,11 +294,11 @@ pipe
 
   open(fd: i32, on_read: stream_read::cb): pipe
   {
-    let self = pipe on_read;
+    let self = pipe;
     self _lock::run p ->
     {
       p.open fd;
-      p.start
+      p.start on_read
     }
     self
   }
@@ -337,8 +308,12 @@ pipe
     on_read: stream_read::cb,
     on_connect: (_state, i32)->none): pipe
   {
-    let self = pipe on_read;
-    self _lock::run p -> p.connect path on_connect;
+    let self = pipe;
+    self _lock::run p ->
+    {
+      p._on_read = on_read;
+      p.connect path on_connect
+    }
     self
   }
 
@@ -347,14 +322,9 @@ pipe
     pipe::connect(path, on_read, ((p: _state, status: i32): none -> {}))
   }
 
-  on_read(self: pipe, h: stream_read::cb): none
+  start(self: pipe, h: stream_read::cb): none
   {
-    self _lock::run p -> p.on_read h
-  }
-
-  start(self: pipe): none
-  {
-    self _lock::run p -> p.start
+    self _lock::run p -> p.start h
   }
 
   write(self: pipe, data: array[u8]): none

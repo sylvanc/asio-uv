@@ -18,12 +18,15 @@ tty
     _on_read: stream_read::cb;
     _on_resize: resize_cb;
     _closed: bool;
+    _started: bool;
     _in_handler: bool;
 
-    create(_sigwinch: signal, _on_read: stream_read::cb): _state
+    create(_sigwinch: signal): _state
     {
+      let _on_read = (s: stream_read, data: array[u8], size: usize): none -> {}
       let _on_resize = (s: _state, w: usize, h: usize): none -> {}
-      let self = new
+
+      new
       {
         _handle = handle::tty,
         _r = _stream_reader,
@@ -31,10 +34,40 @@ tty
         _on_read,
         _on_resize,
         _closed = false,
+        _started = false,
         _in_handler = false
       }
+    }
 
-      let rcb = (data, size) ->
+    start(self: _state, h: stream_read::cb): none
+    {
+      if self._closed | self._started
+      {
+        return
+      }
+
+      self._on_read = h;
+
+      if :::uv_tty_init(:::uv_default_loop(), self._handle, 0, 0) < 0
+      {
+        self._closed = true;
+        self._sigwinch.close;
+        self._fail_read;
+        return
+      }
+
+      self._started = true;
+      ffi::pin self;
+      ffi::external.add;
+
+      // :::uv_tty_set_mode(self._handle, 3); // UV_TTY_MODE_RAW_VT
+      if :::uv_tty_set_mode(self._handle, 1) < 0
+      {
+        self._close;
+        return
+      }
+
+      let cb = (data, size) ->
       {
         if self._closed
         {
@@ -52,19 +85,13 @@ tty
         }
       }
 
-      :::uv_tty_init(:::uv_default_loop(), self._handle, 0, 0);
-      // :::uv_tty_set_mode(self._handle, 3); // UV_TTY_MODE_RAW_VT
-      :::uv_tty_set_mode(self._handle, 1); // UV_TTY_MODE_RAW
-      ffi::pin self;
-      ffi::external.add;
-      self._r.start(self._handle, rcb);
-      self._resize;
-      self
-    }
+      if !self._r.start(self._handle, cb)
+      {
+        self._close;
+        return
+      }
 
-    on_read(self: _state, h: stream_read::cb): none
-    {
-      self._on_read = h
+      self._resize
     }
 
     on_resize(self: _state, resize: resize_cb): none
@@ -83,11 +110,26 @@ tty
       self._closed = true;
       self._sigwinch.close;
 
-      self._r.stop(self._handle);
-      :::uv_tty_reset_mode();
-      :::uv_close(self._handle, none);
-      ffi::external.remove;
-      ffi::unpin self
+      if self._started
+      {
+        self._started = false;
+        self._r.stop self._handle;
+        :::uv_tty_reset_mode();
+        :::uv_close(self._handle, none);
+
+        if !self._in_handler
+        {
+          ffi::external.remove;
+          ffi::unpin self
+        }
+      }
+    }
+
+    _fail_read(self: _state): none
+    {
+      self._in_handler = true;
+      self._on_read()(self, array[u8]::fill 0, 0);
+      self._in_handler = false
     }
 
     _resize(self: _state): none
@@ -114,21 +156,20 @@ tty
 
       if self._started
       {
-        self._r.stop(self._handle);
-        ffi::external.remove;
-        ffi::unpin self;
         :::uv_tty_reset_mode();
-        :::uv_close(self._handle, none)
+        :::uv_close(self._handle, none);
+        ffi::external.remove;
+        ffi::unpin self
       }
     }
   }
 
   _c: cown[_state];
 
-  create(on_read: stream_read::cb): tty
+  create(): tty
   {
     let sigwinch = signal 28;
-    let _c = cown _state(sigwinch, on_read);
+    let _c = cown _state(sigwinch);
     let self = freeze new {_c}
 
     sigwinch.start
@@ -139,14 +180,14 @@ tty
     self
   }
 
-  on_read(self: tty, h: stream_read::cb): none
-  {
-    self _lock::run t -> t.on_read h
-  }
-
-  on_resize(self: tty, h: resize_cb): none
+  on_resize(self: tty, h: (_state, usize, usize)->none): none
   {
     self _lock::run t -> t.on_resize h
+  }
+
+  start(self: tty, h: stream_read::cb): none
+  {
+    self _lock::run t -> t.start h
   }
 
   close(self: tty): none

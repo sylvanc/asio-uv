@@ -7,16 +7,18 @@ stdin
 {
   create(): tty | pipe | file | none
   {
-    // TODO: doesn't work, need correct _state in the handler
     match :::uv_guess_handle(0)
     {
-      (7) -> pipe::open 0;
-      (14) -> tty;
-      (17) -> file::stdin;
+      (7.i32) -> pipe::open 0;
+      (14.i32) -> tty;
+      (17.i32) -> file::stdin;
     }
     else
     {
-      none
+      new {}
     }
   }
+
+  start(self: tty, h: stream_read::cb): none {}
+  close(self: tty): none {}
 }

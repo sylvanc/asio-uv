@@ -208,7 +208,7 @@ file
       }
 
       let req = _req::fs();
-      :::uv_fs_close(:::uv_default_loop(), req, 0, none);
+      :::uv_fs_close(:::uv_default_loop(), req, self._fd, none);
       :::uv_fs_req_cleanup(req);
       _req::free(req)
     }

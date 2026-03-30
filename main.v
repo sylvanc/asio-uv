@@ -16,12 +16,17 @@ main(): i32
 
   t 0;
 
-  tty (t, data, size) ->
+  stdin.start (in, data, size) ->
   {
-    if ((size > 0) & {data(0) == 'q'})
+    if size == 0
+    {
+      print "eof";
+      in.close
+    }
+    else if data(0) == 'q'
     {
       print "quit";
-      t.close;
+      in.close
     }
     else
     {

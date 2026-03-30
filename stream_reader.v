@@ -62,8 +62,13 @@ _stream_reader
       }
     }
 
-    :::uv_read_start(handle, self.acb.raw, self.rcb.raw);
-    self._active = true
+    if :::uv_read_start(handle, self.acb.raw, self.rcb.raw) < 0
+    {
+      return false
+    }
+
+    self._active = true;
+    true
   }
 
   stop(self: _stream_reader, handle: array[u8]): none

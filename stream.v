@@ -19,7 +19,7 @@ shape stream_read
 {
   use cb = (stream_read, array[u8], usize)->none;
 
-  on_read(self: self, h: cb): none;
+  start(self: self, h: cb): none;
   close(self: self): none;
 }
 
