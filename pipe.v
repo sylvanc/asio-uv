@@ -104,26 +104,21 @@ pipe
       self._in_handler = false
     }
 
-    _dispatch_read(self: _state, data: array[u8], size: usize): none
-    {
-      if self._closed | !self._active
-      {
-        return
-      }
-
-      self._in_handler = true;
-      self._on_read()(self, data, size);
-      self._finish_handler
-    }
-
     _begin_reads(self: _state): none
     {
-      if !self._r.start(
-        self._handle,
-        (data, size) ->
+      let cb = (data, size) ->
+      {
+        if self._closed | !self._active
         {
-          self._dispatch_read(data, size)
-        })
+          return
+        }
+
+        self._in_handler = true;
+        self._on_read()(self, data, size);
+        self._finish_handler
+      }
+
+      if !self._r.start(self._handle, cb)
       {
         self._activate false;
         self._fail_read;
@@ -282,7 +277,7 @@ pipe
   create(): pipe
   {
     let _c = cown _state;
-    new {_c}
+    freeze new {_c}
   }
 
   open(fd: i32): pipe

@@ -115,7 +115,7 @@ timer
 
   create(handler: _state->none): timer
   {
-    new {_c = cown _state handler}
+    freeze new {_c = cown _state handler}
   }
 
   apply(self: timer, timeout: u64): none

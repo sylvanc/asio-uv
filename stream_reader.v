@@ -32,7 +32,7 @@ _stream_reader
   start(
     self: _stream_reader,
     handle: array[u8],
-    on_read: (array[u8], usize)->none): none
+    on_read: (array[u8], usize)->none): bool
   {
     self.stop handle;
 

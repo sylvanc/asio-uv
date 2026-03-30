@@ -14,15 +14,14 @@ signal
     _handle: array[u8];
     _cb: ffi::callback[(ffi::ptr, i32)->none];
 
-    // Signal state spans three independent concerns:
+    // Signal state:
     // - libuv handle lifetime: _initialized, _closed
     // - active callback/pin lifetime: _active, _in_handler
-    // - keepalive policy vs currently-held external token:
-    //   _referenced, _externally_active
+    // - libuv loop refcount: _referenced (uv_unref)
+    // Signals never keep the Verona scheduler alive (no ffi::external).
     _active: bool;
     _initialized: bool;
     _referenced: bool;
-    _externally_active: bool;
     _in_handler: bool;
     _closed: bool;
 
@@ -37,8 +36,7 @@ signal
         _cb,
         _active = false,
         _initialized = false,
-        _referenced = true,
-        _externally_active = false,
+        _referenced = false,
         _in_handler = false,
         _closed = false
       }
@@ -57,22 +55,10 @@ signal
       {
         if active
         {
-          ffi::pin self;
-
-          if self._referenced
-          {
-            ffi::external.add;
-            self._externally_active = true
-          }
+          ffi::pin self
         }
         else
         {
-          if self._externally_active
-          {
-            ffi::external.remove;
-            self._externally_active = false
-          }
-
           ffi::unpin self
         }
       }
@@ -98,12 +84,6 @@ signal
 
         if !self._active
         {
-          if self._externally_active
-          {
-            ffi::external.remove;
-            self._externally_active = false
-          }
-
           ffi::unpin self
         }
       }
@@ -142,27 +122,6 @@ signal
       self._activate false
     }
 
-    unref(self: _state): none
-    {
-      if !self._referenced
-      {
-        return
-      }
-
-      self._referenced = false;
-
-      if self._initialized & !self._closed
-      {
-        :::uv_unref(self._handle)
-      }
-
-      if self._externally_active
-      {
-        ffi::external.remove;
-        self._externally_active = false
-      }
-    }
-
     close(self: _state): none
     {
       if self._closed
@@ -184,6 +143,21 @@ signal
       }
     }
 
+    unref(self: _state): none
+    {
+      if !self._referenced
+      {
+        return
+      }
+
+      self._referenced = false;
+
+      if self._initialized & !self._closed
+      {
+        :::uv_unref(self._handle)
+      }
+    }
+
     final(self: _state): none
     {
       if self._closed
@@ -196,12 +170,7 @@ signal
         :::uv_signal_stop(self._handle)
       }
 
-      if self._externally_active
-      {
-        ffi::external.remove
-      }
-
-      if self._active | self._externally_active
+      if self._active
       {
         ffi::unpin self
       }
@@ -218,7 +187,7 @@ signal
   create(signum: i32, handler: ()->none): signal
   {
     let _c = cown _state(signum);
-    let self = new {_c}
+    let self = freeze new {_c}
     self.start handler;
     self
   }
@@ -226,7 +195,7 @@ signal
   create(signum: i32): signal
   {
     let _c = cown _state(signum);
-    new {_c}
+    freeze new {_c}
   }
 
   start(self: signal, handler: ()->none): none

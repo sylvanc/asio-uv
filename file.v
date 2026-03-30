@@ -219,7 +219,7 @@ file
   stdin(): file
   {
     let _c = cown _state 0;
-    new {_c}
+    freeze new {_c}
   }
 
   start(self: file, h: stream_read::cb): none

@@ -63,7 +63,7 @@ tty
       // :::uv_tty_set_mode(self._handle, 3); // UV_TTY_MODE_RAW_VT
       if :::uv_tty_set_mode(self._handle, 1) < 0
       {
-        self._close;
+        self.close;
         return
       }
 
@@ -87,7 +87,7 @@ tty
 
       if !self._r.start(self._handle, cb)
       {
-        self._close;
+        self.close;
         return
       }
 
@@ -113,7 +113,7 @@ tty
       if self._started
       {
         self._started = false;
-        self._r.stop self._handle;
+        self._r.stop(self._handle); // TODO: shouldn't need parens
         :::uv_tty_reset_mode();
         :::uv_close(self._handle, none);
 

@@ -5,7 +5,7 @@ use "libuv.so"
 
 stdin
 {
-  create(): tty | pipe | file | none
+  create(): tty | pipe | file | stdin
   {
     match :::uv_guess_handle(0)
     {
@@ -15,7 +15,7 @@ stdin
     }
     else
     {
-      new {}
+      freeze new {}
     }
   }
 
