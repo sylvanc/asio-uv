@@ -5,13 +5,14 @@ use "libuv.so"
 
 stdin
 {
-  create(): tty | pipe | file | stdin
+  once create(): tty | pipe | file | stdin
   {
     match :::uv_guess_handle(0)
     {
-      (7.i32) -> pipe::open 0;
-      (14.i32) -> tty;
-      (17.i32) -> file::stdin;
+      // TODO: should we be inferring i32 here?
+      (7.i32) -> pipe::_stdin;
+      (14.i32) -> tty::_stdin;
+      (17.i32) -> file::_stdin;
     }
     else
     {

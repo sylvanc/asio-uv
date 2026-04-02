@@ -166,7 +166,7 @@ tty
 
   _c: cown[_state];
 
-  create(): tty
+  _stdin(): tty
   {
     let sigwinch = signal 28;
     let _c = cown _state(sigwinch);
@@ -182,21 +182,21 @@ tty
 
   on_resize(self: tty, h: (_state, usize, usize)->none): none
   {
-    self _lock::run t -> t.on_resize h
+    self._c _lock::run t -> t.on_resize h
   }
 
   start(self: tty, h: stream_read::cb): none
   {
-    self _lock::run t -> t.start h
+    self._c _lock::run t -> t.start h
   }
 
   close(self: tty): none
   {
-    self _lock::run t -> t.close
+    self._c _lock::run t -> t.close
   }
 
   _resize(self: tty): none
   {
-    self _lock::run t -> t._resize
+    self._c _lock::run t -> t._resize
   }
 }

@@ -7,9 +7,9 @@ _lock
     cown(new { _batching = false })
   }
 
-  run[A, B](some: A, handler: B->none): none
+  run[A](some: cown[A], handler: A->none): none
   {
-    when (_lock, some._c) (l, c) ->
+    when (_lock, some) (l, c) ->
     {
       (*l).acquire;
       handler(*c)

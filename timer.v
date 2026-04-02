@@ -120,11 +120,11 @@ timer
 
   apply(self: timer, timeout: u64): none
   {
-    self _lock::run t -> t timeout
+    self._c _lock::run t -> t timeout
   }
 
   cancel(self: timer): none
   {
-    self _lock::run t -> t.cancel
+    self._c _lock::run t -> t.cancel
   }
 }

@@ -200,21 +200,21 @@ signal
 
   start(self: signal, handler: ()->none): none
   {
-    self _lock::run t -> t.start handler
+    self._c _lock::run t -> t.start handler
   }
 
   stop(self: signal): none
   {
-    self _lock::run t -> t.stop
+    self._c _lock::run t -> t.stop
   }
 
   close(self: signal): none
   {
-    self _lock::run t -> t.close
+    self._c _lock::run t -> t.close
   }
 
   unref(self: signal): none
   {
-    self _lock::run t -> t.unref
+    self._c _lock::run t -> t.unref
   }
 }

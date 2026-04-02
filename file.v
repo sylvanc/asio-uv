@@ -216,7 +216,7 @@ file
 
   _c: cown[_state];
 
-  stdin(): file
+  _stdin(): file
   {
     let _c = cown _state 0;
     freeze new {_c}
@@ -224,11 +224,11 @@ file
 
   start(self: file, h: stream_read::cb): none
   {
-    self _lock::run f -> f.start h
+    self._c _lock::run f -> f.start h
   }
 
   close(self: file): none
   {
-    self _lock::run f -> f.close
+    self._c _lock::run f -> f.close
   }
 }
