@@ -7,6 +7,15 @@ _lock
     cown(new { _batching = false })
   }
 
+  run(handler: ()->none): none
+  {
+    when _lock l ->
+    {
+      (*l).acquire;
+      handler()
+    }
+  }
+
   run[A](some: cown[A], handler: A->none): none
   {
     when (_lock, some) (l, c) ->
