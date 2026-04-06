@@ -15,30 +15,32 @@ _stream_writer
     {
       let buf = :::uv_req_get_data(req);
       let data = _uv_buf_type.load[array[u8]](buf, 0);
-      ffi::unpin(data);
-      _uv_buf_type.free(buf);
-      _req::free(req);
+      ffi::unpin data;
+      _uv_buf_type.free buf;
+      _req::free req;
     }
 
     new {cb}
   }
 
-  write(self: _stream_writer, handle: uv_handle, data: array[u8]): none
+  write(
+    self: _stream_writer, handle: array[u8], data: array[u8], size: usize): none
   {
-    ffi::pin(data);
-    let buf = _uv_buf_type.alloc();
-    _uv_buf_type.store(buf, 0, data);
-    _uv_buf_type.store(buf, 1, data.size);
+    let sz = size min data.size;
+    ffi::pin data;
+    let buf = _uv_buf_type.alloc;
+    _uv_buf_type.store[array[u8]](buf, 0, data);
+    _uv_buf_type.store[usize](buf, 1, sz);
 
-    let req = _req::write();
+    let req = _req::write;
     :::uv_req_set_data(req, buf);
     let status = :::uv_write(req, handle, buf, 1, self.cb.raw);
 
     if status < 0
     {
-      ffi::unpin(data);
-      _uv_buf_type.free(buf);
-      _req::free(req)
+      ffi::unpin data;
+      _uv_buf_type.free buf;
+      _req::free req
     }
   }
 }

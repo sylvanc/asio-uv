@@ -2,12 +2,6 @@ use uv_req = ffi::ptr;
 use uv_buf = ffi::ptr;
 use _uv_buf_type = ffi::struct[(array[u8], usize)];
 
-use
-{
-  malloc = "malloc"(usize): ffi::ptr;
-  free = "free"(ffi::ptr): none;
-}
-
 use "libuv.so"
 {
   uv_req_size = "uv_req_size"(i32): usize;

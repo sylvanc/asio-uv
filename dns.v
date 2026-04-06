@@ -43,7 +43,6 @@ dns
   {
     let family = _addrinfo.load[i32](cur, 1);
     let ai_addr = _addrinfo.load[ffi::ptr](cur, 5);
-
     let ip_buf = array[u8]::fill(64);
 
     if family == 2

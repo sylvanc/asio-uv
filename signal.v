@@ -2,7 +2,6 @@ use "libuv.so"
 {
   uv_signal_init = "uv_signal_init"(ffi::ptr, ffi::ptr): i32;
   uv_signal_start = "uv_signal_start"(ffi::ptr, ffi::ptr, i32): i32;
-  uv_signal_stop = "uv_signal_stop"(ffi::ptr): i32;
   uv_unref = "uv_unref"(ffi::ptr): none;
 }
 
@@ -10,175 +9,68 @@ signal
 {
   _state
   {
+    _handle: uv_handle;
     _signum: i32;
-    _handle: array[u8];
-    _cb: ffi::callback[(ffi::ptr, i32)->none];
-
-    // Signal state:
-    // - libuv handle lifetime: _initialized, _closed
-    // - active callback/pin lifetime: _active, _in_handler
-    // - libuv loop refcount: _referenced (uv_unref)
-    // Signals never keep the Verona scheduler alive (no ffi::external).
-    _active: bool;
-    _initialized: bool;
-    _referenced: bool;
-    _in_handler: bool;
-    _closed: bool;
+    _cb: ffi::callback[(uv_handle, i32)->none];
 
     create(signum: i32): _state
     {
-      let _handle = handle::signal;
-      let _cb = ffi::callback (handle: ffi::ptr, signum: i32): none -> {}
+      let _cb = ffi::callback (handle: uv_handle, signum: i32): none -> {}
+
       new
       {
+        _handle = handle,
         _signum = signum,
-        _handle,
-        _cb,
-        _active = false,
-        _initialized = false,
-        _referenced = false,
-        _in_handler = false,
-        _closed = false
-      }
-    }
-
-    _activate(self: _state, active: bool): none
-    {
-      if self._active == active
-      {
-        return
-      }
-
-      self._active = active;
-
-      if !self._in_handler
-      {
-        if active
-        {
-          ffi::pin self
-        }
-        else
-        {
-          ffi::unpin self
-        }
+        _cb
       }
     }
 
     start(self: _state, handler: ()->none): none
     {
-      if self._closed | self._active
+      if !handle::open self._handle
       {
-        return
+        self._handle = handle::signal;
+        :::uv_signal_init(:::uv_default_loop(), self._handle);
+        ffi::pin self
       }
 
-      self._cb = ffi::callback (handle: ffi::ptr, signum: i32): none ->
+      self._cb = ffi::callback (h: uv_handle, signum: i32): none ->
       {
-        if !self._active | self._closed
+        if !handle::open self._handle
         {
           return
         }
 
-        self._in_handler = true;
-        handler();
-        self._in_handler = false;
-
-        if !self._active
-        {
-          ffi::unpin self
-        }
+        handler()
       }
 
-      if !self._initialized
-      {
-        if :::uv_signal_init(:::uv_default_loop(), self._handle) < 0
-        {
-          return
-        }
-
-        self._initialized = true;
-
-        if !self._referenced
-        {
-          :::uv_unref(self._handle)
-        }
-      }
-
-      if :::uv_signal_start(self._handle, self._cb.raw, self._signum) < 0
-      {
-        return
-      }
-
-      self._activate true;
-    }
-
-    stop(self: _state): none
-    {
-      if !self._active | self._closed
-      {
-        return
-      }
-
-      :::uv_signal_stop(self._handle);
-      self._activate false
+      :::uv_signal_start(self._handle, self._cb.raw, self._signum)
     }
 
     close(self: _state): none
     {
-      if self._closed
+      if !handle::open self._handle
       {
         return
       }
 
-      self._closed = true;
-
-      if self._active
-      {
-        :::uv_signal_stop(self._handle);
-        self._activate false
-      }
-
-      if self._initialized
-      {
-        :::uv_close(self._handle, none)
-      }
+      self._handle = handle::close self._handle
+      ffi::unpin self
     }
 
     unref(self: _state): none
     {
-      if !self._referenced
+      if !handle::open self._handle
       {
         return
       }
 
-      self._referenced = false;
-
-      if self._initialized & !self._closed
-      {
-        :::uv_unref(self._handle)
-      }
+      :::uv_unref(self._handle)
     }
 
     final(self: _state): none
     {
-      if self._closed
-      {
-        return
-      }
-
-      if self._active
-      {
-        :::uv_signal_stop(self._handle)
-      }
-
-      if self._active
-      {
-        ffi::unpin self
-      }
-
-      if self._initialized
-      {
-        :::uv_close(self._handle, none)
-      }
+      handle::close self._handle
     }
   }
 
@@ -194,18 +86,13 @@ signal
 
   create(signum: i32): signal
   {
-    let _c = cown _state(signum);
+    let _c = cown _state signum;
     freeze new {_c}
   }
 
   start(self: signal, handler: ()->none): none
   {
     self._c _lock::run t -> t.start handler
-  }
-
-  stop(self: signal): none
-  {
-    self._c _lock::run t -> t.stop
   }
 
   close(self: signal): none

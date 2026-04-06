@@ -9,28 +9,24 @@ timer
 {
   _state
   {
-    _handle: array[u8];
+    _handle: uv_handle;
     _cb: ffi::callback[ffi::ptr->none];
     _active: bool;
     _in_handler: bool;
-    _closed: bool;
 
     create(handler: _state->none): _state
     {
-      let _handle = handle::timer;
-      let _cb = ffi::callback (handle: ffi::ptr): none -> {}
       let self = new
       {
-        _handle,
-        _cb,
+        _handle = handle,
+        _cb = (ffi::callback (handle: ffi::ptr): none -> {}),
         _active = false,
-        _in_handler = false,
-        _closed = false
+        _in_handler = false
       }
 
       self._cb = ffi::callback (handle: ffi::ptr): none ->
       {
-        if !self._active | self._closed
+        if !self._active
         {
           return
         }
@@ -43,18 +39,19 @@ timer
         if !self._active
         {
           ffi::external.remove
+          ffi::unpin self
         }
       }
 
-      :::uv_timer_init(:::uv_default_loop(), self._handle);
       self
     }
 
     apply(self: _state, timeout: u64): none
     {
-      if self._closed
+      if !handle::open self._handle
       {
-        return
+        self._handle = handle::timer;
+        :::uv_timer_init(:::uv_default_loop(), self._handle);
       }
 
       self._activate true;
@@ -63,13 +60,19 @@ timer
 
     cancel(self: _state): none
     {
-      if !self._active | self._closed
+      if !handle::open self._handle
       {
         return
       }
 
       :::uv_timer_stop(self._handle);
       self._activate false
+    }
+
+    close(self: _state): none
+    {
+      self.cancel;
+      self._handle = handle::close self._handle
     }
 
     _activate(self: _state, active: bool): none
@@ -98,16 +101,7 @@ timer
 
     final(self: _state): none
     {
-      if !self._closed
-      {
-        if self._active
-        {
-          ffi::external.remove;
-          ffi::unpin self
-        }
-
-        :::uv_close(self._handle, none)
-      }
+      handle::close self._handle;
     }
   }
 

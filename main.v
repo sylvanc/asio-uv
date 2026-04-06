@@ -2,47 +2,42 @@ use print = "https://github.com/sylvanc/print" "main";
 
 main(): i32
 {
-  // let count = 0;
+  let a = addr 9163;
 
-  // let t = timer t ->
-  // {
-  //   if count < 5
-  //   {
-  //     print "tick";
-  //     count = count + 1;
-  //     t 500
-  //   }
-  // }
-
-  // t 0;
-
-  // stdin.start (in, data, size) ->
-  // {
-  //   if size == 0
-  //   {
-  //     print "eof";
-  //     in.close
-  //   }
-  //   else if data(0) == 'q'
-  //   {
-  //     print "quit";
-  //     in.close
-  //   }
-  //   else
-  //   {
-  //     print::out.print "*"
-  //   }
-  // }
-
-  dns("example.com").resolve result ->
+  let server = tcp_listener(a) (server, conn) ->
   {
-    print "got addrinfo";
-
-    result.each addr ->
+    conn.start (conn, data, size) ->
     {
-      print addr.ip
+      if size > 0
+      {
+        print "server got data";
+        conn.write(data, size);
+        conn.shutdown
+      }
+      else
+      {
+        print "server got EOF";
+        conn.close
+      }
+    }
+
+    server.close
+  }
+
+  let client = tcp(a).start (conn, data, size) ->
+  {
+    if size > 0
+    {
+      print "client got data";
+      conn.shutdown
+    }
+    else
+    {
+      print "client got EOF";
+      conn.close
     }
   }
 
+  client.write array[u8]::fill(4, 'h');
   0
 }

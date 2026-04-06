@@ -20,16 +20,30 @@ addr
 {
   _data: array[u8];
 
-  // Create an addr from raw sockaddr data (used by dns).
-  create(_data: array[u8]): addr
+  _from_sockaddr(_data: array[u8]): addr
   {
-    new { _data }
+    freeze new {_data}
   }
 
-  // Default constructor (unspecified address).
-  create(): addr
+  // Create from IP string and port. Auto-detects IPv4 vs IPv6.
+  create(ip: string, port: u16): addr
   {
-    new { _data = array[u8]::fill(128) }
+    let _data = array[u8]::fill(128);
+    let cs = ip.cstring;
+
+    if :::uv_ip4_addr(cs, port.i32, ffi::ptr _data) == 0
+    {
+      return freeze new {_data}
+    }
+
+    :::uv_ip6_addr(cs, port.i32, ffi::ptr _data);
+    freeze new {_data}
+  }
+
+  // Create from port only. Binds all interfaces.
+  create(port: u16): addr
+  {
+    addr::ip6(port)
   }
 
   // Create an IPv4 address from an IP string and port.
@@ -37,7 +51,13 @@ addr
   {
     let _data = array[u8]::fill(128);
     :::uv_ip4_addr(ip.cstring, port.i32, ffi::ptr _data);
-    freeze new { _data }
+    freeze new {_data}
+  }
+
+  // Create an IPv4 address from a port only. Binds all interfaces.
+  ip4(port: u16): addr
+  {
+    addr::ip4("0.0.0.0", port)
   }
 
   // Create an IPv6 address from an IP string and port.
@@ -45,7 +65,13 @@ addr
   {
     let _data = array[u8]::fill(128);
     :::uv_ip6_addr(ip.cstring, port.i32, ffi::ptr _data);
-    freeze new { _data }
+    freeze new {_data}
+  }
+
+  // Create an IPv6 address from a port only. Binds all interfaces.
+  ip6(port: u16): addr
+  {
+    addr::ip6("::", port)
   }
 
   // Get the address family. AF_INET=2, AF_INET6=10.
