@@ -8,7 +8,7 @@ use "libuv.so"
 
 _async
 {
-  _handle: array[u8];
+  _handle: uv_handle;
   _cb: ffi::callback[ffi::ptr->none];
 
   once create(): _async
@@ -30,7 +30,8 @@ _async
     let _handle = handle::async;
     let _cb = ffi::callback (handle: ffi::ptr): none ->
     {
-      _async::shutdown.close
+      _async::shutdown._close;
+      _async._close
     }
 
     :::uv_async_init(:::uv_default_loop(), _handle, _cb.raw);
@@ -42,8 +43,8 @@ _async
     :::uv_async_send(self._handle);
   }
 
-  close(self: _async): none
+  _close(self: _async): none
   {
-    :::uv_close(self._handle, none);
+    :::uv_close(self._handle, handle::_close_cb.raw);
   }
 }

@@ -1,5 +1,4 @@
 # `asio-uv`
 
-- TCP keepalive, nodelay.
-- Should finalizers do ffi::external.remove?
+- file.v update.
 - Reset TTY mode on SIGINT and SIGTERM.

@@ -105,9 +105,15 @@ dns
       ffi::pin cb;
       ffi::external.add;
 
-      :::uv_getaddrinfo(
+      if :::uv_getaddrinfo(
         :::uv_default_loop(), req, cb.raw,
-        self.host.cstring, self.service.cstring, ffi::ptr)
+        self.host.cstring, self.service.cstring, ffi::ptr) < 0
+      {
+        ffi::unpin cb;
+        ffi::external.remove;
+        _req::free req;
+        handler(array[addr]::fill(0))
+      }
     }
   }
 }

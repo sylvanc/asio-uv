@@ -27,7 +27,13 @@ tcp_listener
       {
         self._handle = handle::tcp;
         :::uv_tcp_init(:::uv_default_loop(), self._handle);
-        :::uv_tcp_bind(self._handle, self._addr.raw, 0);
+
+        if :::uv_tcp_bind(self._handle, self._addr.raw, 0) < 0
+        {
+          self._handle = handle::close self._handle;
+          return
+        }
+
         :::uv_tcp_simultaneous_accepts(self._handle, 1);
         ffi::pin self;
         ffi::external.add
@@ -52,7 +58,12 @@ tcp_listener
         handler(self, tcp::_wrap client)
       }
 
-      :::uv_listen(self._handle, 128, self._cb.raw);
+      if :::uv_listen(self._handle, 128, self._cb.raw) < 0
+      {
+        self._handle = handle::close self._handle;
+        ffi::external.remove;
+        ffi::unpin self
+      }
     }
 
     close(self: _state): none
@@ -63,8 +74,8 @@ tcp_listener
       }
 
       self._handle = handle::close self._handle;
-      ffi::unpin self;
       ffi::external.remove
+      ffi::unpin self;
     }
 
     final(self: _state): none
