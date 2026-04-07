@@ -21,7 +21,7 @@ tcp_listener
       new { _handle = handle, _addr, _cb }
     }
 
-    start(self: _state, handler: (_state, tcp)->none): none
+    start(self: _state, handler: (_state, tcp)->none): _state
     {
       if !handle::open self._handle
       {
@@ -31,7 +31,7 @@ tcp_listener
         if :::uv_tcp_bind(self._handle, self._addr.raw, 0) < 0
         {
           self._handle = handle::close self._handle;
-          return
+          return self
         }
 
         :::uv_tcp_simultaneous_accepts(self._handle, 1);
@@ -64,18 +64,21 @@ tcp_listener
         ffi::external.remove;
         ffi::unpin self
       }
+
+      self
     }
 
-    close(self: _state): none
+    close(self: _state): _state
     {
       if !handle::open self._handle
       {
-        return
+        return self
       }
 
       self._handle = handle::close self._handle;
-      ffi::external.remove
+      ffi::external.remove;
       ffi::unpin self;
+      self
     }
 
     final(self: _state): none
@@ -92,13 +95,15 @@ tcp_listener
     freeze new {_c}
   }
 
-  start(self: tcp_listener, handler: (_state, tcp)->none): none
+  start(self: tcp_listener, handler: (_state, tcp)->none): tcp_listener
   {
-    self._c _lock::run t -> t.start handler
+    self._c _lock::run t -> t.start handler;
+    self
   }
 
-  close(self: tcp_listener): none
+  close(self: tcp_listener): tcp_listener
   {
-    self._c _lock::run t -> t.close
+    self._c _lock::run t -> t.close;
+    self
   }
 }

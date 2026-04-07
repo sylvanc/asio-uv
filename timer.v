@@ -46,7 +46,7 @@ timer
       self
     }
 
-    apply(self: _state, timeout: u64): none
+    apply(self: _state, timeout: u64): _state
     {
       if !handle::open self._handle
       {
@@ -55,24 +55,27 @@ timer
       }
 
       self._activate true;
-      :::uv_timer_start(self._handle, self._cb.raw, timeout, 0)
+      :::uv_timer_start(self._handle, self._cb.raw, timeout, 0);
+      self
     }
 
-    cancel(self: _state): none
+    cancel(self: _state): _state
     {
       if !handle::open self._handle
       {
-        return
+        return self
       }
 
       :::uv_timer_stop(self._handle);
-      self._activate false
+      self._activate false;
+      self
     }
 
-    close(self: _state): none
+    close(self: _state): _state
     {
       self.cancel;
-      self._handle = handle::close self._handle
+      self._handle = handle::close self._handle;
+      self
     }
 
     _activate(self: _state, active: bool): none
@@ -112,13 +115,15 @@ timer
     freeze new {_c = cown _state handler}
   }
 
-  apply(self: timer, timeout: u64): none
+  apply(self: timer, timeout: u64): timer
   {
-    self._c _lock::run t -> t timeout
+    self._c _lock::run t -> t timeout;
+    self
   }
 
-  cancel(self: timer): none
+  cancel(self: timer): timer
   {
-    self._c _lock::run t -> t.cancel
+    self._c _lock::run t -> t.cancel;
+    self
   }
 }

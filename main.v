@@ -4,7 +4,7 @@ main(): i32
 {
   let a = addr 9163;
 
-  let server = tcp_listener(a) (server, conn) ->
+  tcp_listener(a).start (server, conn) ->
   {
     conn.start (conn, data, size) ->
     {
@@ -38,6 +38,6 @@ main(): i32
     }
   }
 
-  client.write array[u8]::fill(4, 'h');
+  client.write(array[u8]::fill(4, 'h'));
   0
 }

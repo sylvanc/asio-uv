@@ -13,14 +13,14 @@ shape stream_read
 {
   use cb = (stream_read, array[u8], usize)->none;
 
-  start(self: self, h: cb): none;
-  close(self: self): none;
+  start(self: self, h: cb): self;
+  close(self: self): self;
 }
 
 shape stream_write
 {
-  write(self: self, data: array[u8]): none;
-  write(self: self, data: array[u8], size: usize): none;
+  write(self: self, data: array[u8]): self;
+  write(self: self, data: array[u8], size: usize): self;
 }
 
 _req

@@ -77,7 +77,7 @@ dns
     addrs
   }
 
-  resolve(self: dns, handler: array[addr]->none): none
+  resolve(self: dns, handler: array[addr]->none): dns
   {
     let wrapper = (req: ffi::ptr, status: i32, res: ffi::ptr): none ->
     {
@@ -115,5 +115,7 @@ dns
         handler(array[addr]::fill(0))
       }
     }
+
+    self
   }
 }

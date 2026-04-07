@@ -33,7 +33,7 @@ tty
       }
     }
 
-    start(self: _state, h: stream_read::cb): none
+    start(self: _state, h: stream_read::cb): _state
     {
       self._on_read = h;
 
@@ -59,42 +59,45 @@ tty
       if !self._r.start(self._handle, cb)
       {
         self._on_read()(self, array[u8]::fill 0, 0);
-        self.close;
-        return
+        self.close
       }
-
-      self._resize
+      else
+      {
+        self._resize
+      }
     }
 
-    on_resize(self: _state, resize: resize_cb): none
+    on_resize(self: _state, resize: resize_cb): _state
     {
       self._on_resize = resize;
       self._resize
     }
 
-    close(self: _state): none
+    close(self: _state): _state
     {
       if !handle::open self._handle
       {
-        return
+        return self
       }
 
       self._handle = handle::close self._handle;
       ffi::external.remove;
-      ffi::unpin self
+      ffi::unpin self;
+      self
     }
 
-    _resize(self: _state): none
+    _resize(self: _state): _state
     {
       if !handle::open self._handle
       {
-        return
+        return self
       }
 
       let w = i32 0;
       let h = i32 0;
       :::uv_tty_get_winsize(self._handle, ffi::ptr w, ffi::ptr h);
-      self._on_resize()(self, w.usize, h.usize)
+      self._on_resize()(self, w.usize, h.usize);
+      self
     }
 
     final(self: _state): none
@@ -120,23 +123,27 @@ tty
     self
   }
 
-  on_resize(self: tty, h: (_state, usize, usize)->none): none
+  on_resize(self: tty, h: (_state, usize, usize)->none): tty
   {
-    self._c _lock::run t -> t.on_resize h
+    self._c _lock::run t -> t.on_resize h;
+    self
   }
 
-  start(self: tty, h: stream_read::cb): none
+  start(self: tty, h: stream_read::cb): tty
   {
-    self._c _lock::run t -> t.start h
+    self._c _lock::run t -> t.start h;
+    self
   }
 
-  close(self: tty): none
+  close(self: tty): tty
   {
-    self._c _lock::run t -> t.close
+    self._c _lock::run t -> t.close;
+    self
   }
 
-  _resize(self: tty): none
+  _resize(self: tty): tty
   {
-    self._c _lock::run t -> t._resize
+    self._c _lock::run t -> t._resize;
+    self
   }
 }

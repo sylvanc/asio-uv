@@ -20,6 +20,6 @@ stdin
     }
   }
 
-  start(self: stdin, h: stream_read::cb): none {}
-  close(self: stdin): none {}
+  start(self: stdin, h: stream_read::cb): stdin { self }
+  close(self: stdin): stdin { self }
 }

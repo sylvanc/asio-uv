@@ -38,13 +38,15 @@ _async
     new {_handle, _cb}
   }
 
-  send(self: _async): none
+  send(self: _async): _async
   {
     :::uv_async_send(self._handle);
+    self
   }
 
-  _close(self: _async): none
+  _close(self: _async): _async
   {
     :::uv_close(self._handle, handle::_close_cb.raw);
+    self
   }
 }

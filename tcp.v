@@ -49,7 +49,7 @@ tcp
       }
     }
 
-    start(self: _state, h: stream_read::cb): none
+    start(self: _state, h: stream_read::cb): _state
     {
       if !handle::open self._handle
       {
@@ -91,7 +91,7 @@ tcp
           self.close;
         }
 
-        return
+        return self
       }
 
       self._on_read = h;
@@ -111,48 +111,53 @@ tcp
         self._on_read()(self, array[u8]::fill 0, 0);
         self.close
       }
+
+      self
     }
 
-    write(self: _state, data: array[u8]): none
+    write(self: _state, data: array[u8]): _state
     {
       self.write(data, data.size)
     }
 
-    write(self: _state, data: array[u8], size: usize): none
+    write(self: _state, data: array[u8], size: usize): _state
     {
       if !handle::open self._handle
       {
-        return
+        return self
       }
 
-      self._w.write(self._handle, data, size)
+      self._w.write(self._handle, data, size);
+      self
     }
 
-    nodelay(self: _state, enable: bool): none
+    nodelay(self: _state, enable: bool): _state
     {
       if !handle::open self._handle
       {
-        return
+        return self
       }
 
-      :::uv_tcp_nodelay(self._handle, if enable { 1 } else { 0 })
+      :::uv_tcp_nodelay(self._handle, if enable { 1 } else { 0 });
+      self
     }
 
-    keepalive(self: _state, enable: bool, delay: u32): none
+    keepalive(self: _state, enable: bool, delay: u32): _state
     {
       if !handle::open self._handle
       {
-        return
+        return self
       }
 
-      :::uv_tcp_keepalive(self._handle, if enable { 1 } else { 0 }, delay)
+      :::uv_tcp_keepalive(self._handle, if enable { 1 } else { 0 }, delay);
+      self
     }
     
-    shutdown(self: _state): none
+    shutdown(self: _state): _state
     {
       if !handle::open self._handle
       {
-        return
+        return self
       }
 
       let cb = ffi::callback (req: uv_req, status: i32): none ->
@@ -164,19 +169,21 @@ tcp
       ffi::pin cb;
       let req = _req::shutdown();
       :::uv_req_set_data(req, ffi::ptr cb);
-      :::uv_shutdown(req, self._handle, cb.raw)
+      :::uv_shutdown(req, self._handle, cb.raw);
+      self
     }
 
-    close(self: _state): none
+    close(self: _state): _state
     {
       if !handle::open self._handle
       {
-        return
+        return self
       }
 
       self._handle = handle::close self._handle;
       ffi::external.remove;
-      ffi::unpin self
+      ffi::unpin self;
+      self
     }
 
     _get_peer(h: uv_handle): addr
@@ -208,38 +215,45 @@ tcp
     freeze new {_c}
   }
 
-  start(self: tcp, h: stream_read::cb): none
+  start(self: tcp, h: stream_read::cb): tcp
   {
-    self._c _lock::run t -> t.start h
+    self._c _lock::run t -> t.start h;
+    self
   }
 
-  write(self: tcp, data: array[u8]): none
+  write(self: tcp, data: array[u8]): tcp
   {
-    self._c _lock::run t -> t.write data
+    self._c _lock::run t -> t.write data;
+    self
   }
 
-  write(self: tcp, data: array[u8], size: usize): none
+  write(self: tcp, data: array[u8], size: usize): tcp
   {
-    self._c _lock::run t -> t.write(data, size)
+    self._c _lock::run t -> t.write(data, size);
+    self
   }
 
-  nodelay(self: tcp, enable: bool = true): none
+  nodelay(self: tcp, enable: bool = true): tcp
   {
-    self._c _lock::run t -> t.nodelay enable
+    self._c _lock::run t -> t.nodelay enable;
+    self
   }
 
-  keepalive(self: tcp, enable: bool = true, delay: u32 = 30): none
+  keepalive(self: tcp, enable: bool = true, delay: u32 = 30): tcp
   {
-    self._c _lock::run t -> t.keepalive enable delay
+    self._c _lock::run t -> t.keepalive enable delay;
+    self
   }
 
-  shutdown(self: tcp): none
+  shutdown(self: tcp): tcp
   {
-    self._c _lock::run t -> t.shutdown
+    self._c _lock::run t -> t.shutdown;
+    self
   }
 
-  close(self: tcp): none
+  close(self: tcp): tcp
   {
-    self._c _lock::run t -> t.close
+    self._c _lock::run t -> t.close;
+    self
   }
 }

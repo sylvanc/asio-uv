@@ -25,7 +25,7 @@ signal
       }
     }
 
-    start(self: _state, handler: ()->none): none
+    start(self: _state, handler: ()->none): _state
     {
       if !handle::open self._handle
       {
@@ -44,28 +44,31 @@ signal
         handler()
       }
 
-      :::uv_signal_start(self._handle, self._cb.raw, self._signum)
+      :::uv_signal_start(self._handle, self._cb.raw, self._signum);
+      self
     }
 
-    close(self: _state): none
+    close(self: _state): _state
     {
       if !handle::open self._handle
       {
-        return
+        return self
       }
 
-      self._handle = handle::close self._handle
-      ffi::unpin self
+      self._handle = handle::close self._handle;
+      ffi::unpin self;
+      self
     }
 
-    unref(self: _state): none
+    unref(self: _state): _state
     {
       if !handle::open self._handle
       {
-        return
+        return self
       }
 
-      :::uv_unref(self._handle)
+      :::uv_unref(self._handle);
+      self
     }
 
     final(self: _state): none
@@ -90,18 +93,21 @@ signal
     freeze new {_c}
   }
 
-  start(self: signal, handler: ()->none): none
+  start(self: signal, handler: ()->none): signal
   {
-    self._c _lock::run t -> t.start handler
+    self._c _lock::run t -> t.start handler;
+    self
   }
 
-  close(self: signal): none
+  close(self: signal): signal
   {
-    self._c _lock::run t -> t.close
+    self._c _lock::run t -> t.close;
+    self
   }
 
-  unref(self: signal): none
+  unref(self: signal): signal
   {
-    self._c _lock::run t -> t.unref
+    self._c _lock::run t -> t.unref;
+    self
   }
 }

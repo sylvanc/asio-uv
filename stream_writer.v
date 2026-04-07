@@ -24,7 +24,7 @@ _stream_writer
   }
 
   write(
-    self: _stream_writer, handle: array[u8], data: array[u8], size: usize): none
+    self: _stream_writer, handle: uv_handle, data: array[u8], size: usize): none
   {
     let sz = size min data.size;
     ffi::pin data;

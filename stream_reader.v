@@ -31,7 +31,7 @@ _stream_reader
 
   start(
     self: _stream_reader,
-    handle: array[u8],
+    handle: uv_handle,
     on_read: (array[u8], usize)->none): bool
   {
     self.stop handle;
@@ -71,7 +71,7 @@ _stream_reader
     true
   }
 
-  stop(self: _stream_reader, handle: array[u8]): none
+  stop(self: _stream_reader, handle: uv_handle): none
   {
     if self._active
     {

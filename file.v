@@ -22,11 +22,11 @@ file
       new {_fd, _on_read, _cb}
     }
 
-    start(self: _state, h: stream_read::cb): none
+    start(self: _state, h: stream_read::cb): _state
     {
       if self._fd == -1
       {
-        return
+        return self
       }
 
       self._on_read = h;
@@ -64,11 +64,11 @@ file
       self._read
     }
 
-    close(self: _state): none
+    close(self: _state): _state
     {
       if self._fd == -1
       {
-        return
+        return self
       }
 
       let req = _req::fs;
@@ -79,13 +79,14 @@ file
       self._fd = -1;
       ffi::external.remove;
       ffi::unpin self;
+      self
     }
 
-    _read(self: _state): none
+    _read(self: _state): _state
     {
       if self._fd == -1
       {
-        return
+        return self
       }
 
       let data = array[u8]::fill 4096;
@@ -117,6 +118,8 @@ file
         self._on_read()(self, data, 0);
         self.close
       }
+
+      self
     }
 
     final(self: _state): none
@@ -142,13 +145,15 @@ file
     freeze new {_c}
   }
 
-  start(self: file, h: stream_read::cb): none
+  start(self: file, h: stream_read::cb): file
   {
-    self._c _lock::run f -> f.start h
+    self._c _lock::run f -> f.start h;
+    self
   }
 
-  close(self: file): none
+  close(self: file): file
   {
-    self._c _lock::run f -> f.close
+    self._c _lock::run f -> f.close;
+    self
   }
 }
