@@ -22,7 +22,7 @@ addr
 
   _from_sockaddr(_data: array[u8]): addr
   {
-    freeze new {_data}
+    mem::freeze new {_data}
   }
 
   // Create from IP string and port. Auto-detects IPv4 vs IPv6.
@@ -33,11 +33,11 @@ addr
 
     if :::uv_ip4_addr(cs, port.i32, ffi::ptr _data) == 0
     {
-      return freeze new {_data}
+      return mem::freeze new {_data}
     }
 
     :::uv_ip6_addr(cs, port.i32, ffi::ptr _data);
-    freeze new {_data}
+    mem::freeze new {_data}
   }
 
   // Create from port only. Binds all interfaces.
@@ -51,7 +51,7 @@ addr
   {
     let _data = array[u8]::fill(128);
     :::uv_ip4_addr(ip.cstring, port.i32, ffi::ptr _data);
-    freeze new {_data}
+    mem::freeze new {_data}
   }
 
   // Create an IPv4 address from a port only. Binds all interfaces.
@@ -65,7 +65,7 @@ addr
   {
     let _data = array[u8]::fill(128);
     :::uv_ip6_addr(ip.cstring, port.i32, ffi::ptr _data);
-    freeze new {_data}
+    mem::freeze new {_data}
   }
 
   // Create an IPv6 address from a port only. Binds all interfaces.

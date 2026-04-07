@@ -16,7 +16,7 @@ stdin
     }
     else
     {
-      freeze new {}
+      mem::freeze new {}
     }
   }
 

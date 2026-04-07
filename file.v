@@ -142,7 +142,7 @@ file
   _stdin(): file
   {
     let _c = cown _state 0;
-    freeze new {_c}
+    mem::freeze new {_c}
   }
 
   start(self: file, h: stream_read::cb): file

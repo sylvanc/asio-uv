@@ -82,7 +82,7 @@ signal
   create(signum: i32, handler: ()->none): signal
   {
     let _c = cown _state(signum);
-    let self = freeze new {_c}
+    let self = mem::freeze new {_c}
     self.start handler;
     self
   }
@@ -90,7 +90,7 @@ signal
   create(signum: i32): signal
   {
     let _c = cown _state signum;
-    freeze new {_c}
+    mem::freeze new {_c}
   }
 
   start(self: signal, handler: ()->none): signal

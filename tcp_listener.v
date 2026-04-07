@@ -92,7 +92,7 @@ tcp_listener
   create(a: addr): tcp_listener
   {
     let _c = cown _state a;
-    freeze new {_c}
+    mem::freeze new {_c}
   }
 
   start(self: tcp_listener, handler: (_state, tcp)->none): tcp_listener

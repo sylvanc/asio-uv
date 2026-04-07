@@ -78,6 +78,7 @@ tcp
           self.start h
         }
 
+        mem::merge(self, connect_cb);
         ffi::pin connect_cb;
         let req = _req::connect();
         :::uv_req_set_data(req, ffi::ptr connect_cb);
@@ -206,13 +207,13 @@ tcp
   _wrap(handle: uv_handle): tcp
   {
     let _c = cown _state::wrap handle;
-    freeze new {_c}
+    mem::freeze new {_c}
   }
 
   create(a: addr): tcp
   {
     let _c = cown _state::connect a;
-    freeze new {_c}
+    mem::freeze new {_c}
   }
 
   start(self: tcp, h: stream_read::cb): tcp

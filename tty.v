@@ -113,7 +113,7 @@ tty
   {
     let sigwinch = signal 28;
     let _c = cown _state sigwinch;
-    let self = freeze new {_c}
+    let self = mem::freeze new {_c}
 
     sigwinch.start
     {

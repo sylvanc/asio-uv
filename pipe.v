@@ -96,7 +96,7 @@ pipe
   _stdin(): pipe
   {
     let _c = cown _state 0;
-    freeze new {_c}
+    mem::freeze new {_c}
   }
 
   start(self: pipe, h: stream_read::cb): none

@@ -112,7 +112,7 @@ timer
 
   create(handler: _state->none): timer
   {
-    freeze new {_c = cown _state handler}
+    mem::freeze new {_c = cown _state handler}
   }
 
   apply(self: timer, timeout: u64): timer
