@@ -206,7 +206,7 @@ tcp
   // Wrap an already-initialized handle as a tcp connection.
   _wrap(handle: uv_handle): tcp
   {
-    let _c = cown _state::wrap handle;
+    let _c = when () {_state::wrap handle}
     mem::freeze new {_c}
   }
 
