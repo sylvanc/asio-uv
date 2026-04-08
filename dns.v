@@ -25,11 +25,10 @@ dns
   // Count entries in an addrinfo linked list.
   _count(res: ffi::ptr): usize
   {
-    let null = ffi::ptr;
-    var count = 1;
+    var count = 0;
     var cur = res;
 
-    while _addrinfo.load[ffi::ptr](cur, 7) != null
+    while cur != ffi::ptr
     {
       count = count + 1;
       cur = _addrinfo.load[ffi::ptr](cur, 7)
@@ -38,38 +37,18 @@ dns
     count
   }
 
-  // Extract an addr from an addrinfo entry using its ai_family and ai_addr.
-  _extract(cur: ffi::ptr): addr
-  {
-    let family = _addrinfo.load[i32](cur, 1);
-    let ai_addr = _addrinfo.load[ffi::ptr](cur, 5);
-    let ip_buf = array[u8]::fill(64);
-
-    if family == 2
-    {
-      :::uv_ip4_name(ai_addr, ip_buf, 64);
-      let port = _sockaddr.load[u16](ai_addr, 1);
-      addr::ip4(string ip_buf, :::ntohs(port))
-    }
-    else
-    {
-      :::uv_ip6_name(ai_addr, ip_buf, 64);
-      let port = _sockaddr.load[u16](ai_addr, 1);
-      addr::ip6(string ip_buf, :::ntohs(port))
-    }
-  }
-
   // Walk an addrinfo linked list and build an array of addr.
   _collect(res: ffi::ptr): array[addr]
   {
-    let n = dns::_count(res);
-    var addrs = array[addr]::fill(n, dns::_extract(res));
+    let n = dns::_count res;
+    var addrs = array[addr]::fill(
+      n, addr::_from_ptr(_addrinfo.load[ffi::ptr](res, 5)));
     var cur = res;
     var i = 0;
 
-    while i < n
+    while cur != ffi::ptr
     {
-      addrs(i) = dns::_extract(cur);
+      addrs(i) = addr::_from_ptr(_addrinfo.load[ffi::ptr](cur, 5));
       i = i + 1;
       cur = _addrinfo.load[ffi::ptr](cur, 7)
     }

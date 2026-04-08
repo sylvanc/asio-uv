@@ -191,8 +191,13 @@ tcp
     {
       let buf = array[u8]::fill(128);
       let len = i32 128;
-      :::uv_tcp_getpeername(h, buf, ffi::ptr len);
-      addr::_from_sockaddr(buf)
+
+      if :::uv_tcp_getpeername(h, buf, ffi::ptr len) < 0
+      {
+        return addr::invalid
+      }
+
+      addr::_from_ptr(ffi::ptr buf)
     }
 
     final(self: _state): none
