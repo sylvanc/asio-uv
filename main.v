@@ -1,6 +1,6 @@
 use print = "https://github.com/sylvanc/print" "main";
 
-main(): i32
+main(): none
 {
   let a = addr 9163;
 
@@ -39,5 +39,4 @@ main(): i32
   }
 
   client.write(array[u8]::fill(4, 'h'));
-  0
 }
