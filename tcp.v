@@ -153,7 +153,7 @@ tcp
       :::uv_tcp_keepalive(self._handle, if enable { 1 } else { 0 }, delay);
       self
     }
-    
+
     shutdown(self: _state): _state
     {
       if !handle::open self._handle
