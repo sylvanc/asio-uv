@@ -95,6 +95,7 @@ tcp
         return self
       }
 
+      mem::merge(self, h);
       self._on_read = h;
 
       let cb = (data, size) ->
