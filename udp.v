@@ -16,7 +16,7 @@ udp
   {
     _handle: uv_handle;
     _addr: addr;
-    _on_recv: (udp, array[u8], usize, addr)->none;
+    _on_recv: (_state, array[u8], usize, addr)->none;
     _acb: ffi::callback[(uv_handle, i32, uv_buf)->none];
     _rcb: ffi::callback[(uv_handle, isize, uv_buf, ffi::ptr, u32)->none];
     _wcb: ffi::callback[(uv_req, i32)->none];
@@ -25,7 +25,7 @@ udp
     create(_addr: addr): _state
     {
       let _on_recv =
-        (u: udp, data: array[u8], size: usize, a: addr): none -> {}
+        (u: _state, data: array[u8], size: usize, a: addr): none -> {}
 
       let _acb = ffi::callback
         (handle: uv_handle, suggested_size: i32, buf: uv_buf): none ->
@@ -73,7 +73,7 @@ udp
       }
     }
 
-    start(self: _state, h: (udp, array[u8], usize, addr)->none): _state
+    start(self: _state, h: (_state, array[u8], usize, addr)->none): _state
     {
       self._ensure_init;
 
@@ -208,7 +208,7 @@ udp
     mem::freeze new {_c}
   }
 
-  start(self: udp, h: (udp, array[u8], usize, addr)->none): udp
+  start(self: udp, h: (_state, array[u8], usize, addr)->none): udp
   {
     self._c _lock::run u -> u.start h;
     self
