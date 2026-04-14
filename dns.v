@@ -68,7 +68,7 @@ dns
       }
       else
       {
-        handler(array[addr]::fill(0))
+        handler(array[addr]::fill(0, addr::invalid))
       }
 
       ffi::unpin :::uv_req_get_data(req);
@@ -91,7 +91,7 @@ dns
         ffi::unpin cb;
         ffi::external.remove;
         _req::free req;
-        handler(array[addr]::fill(0))
+        handler(array[addr]::fill(0, addr::invalid))
       }
     }
 
