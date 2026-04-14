@@ -1,42 +1,13 @@
-use print = "https://github.com/sylvanc/print" "main";
+use test = "https://github.com/sylvanc/test" "main";
 
 main(): none
 {
-  let a = addr 9163;
-
-  tcp_listener(a).start (server, conn) ->
+  (test "addr - create from port") tc ->
   {
-    conn.start (conn, data, size) ->
-    {
-      if size > 0
-      {
-        print "server got data";
-        conn.write(data, size);
-        conn.shutdown
-      }
-      else
-      {
-        print "server got EOF";
-        conn.close
-      }
-    }
-
-    server.close
+    let a = addr 8080;
+    tc.assert(a.valid, "addr should be valid");
+    tc.assert(a.port == 8080, "port should be 8080");
   }
 
-  let client = tcp(a).start (conn, data, size) ->
-  {
-    if size > 0
-    {
-      print "client got data";
-      conn.shutdown
-    }
-    else
-    {
-      print "client got EOF";
-      conn.close
-    }
-  }
-
-  client.write(array[u8]::fill(4, 'h'));
+  test.done
 }
