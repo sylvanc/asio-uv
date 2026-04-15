@@ -154,7 +154,7 @@ addr
       :::uv_ip6_name(ffi::ptr self._data, buf, 64)
     }
 
-    string buf
+    string::from_cstr(ffi::ptr buf)
   }
 
   // Get a pointer to the underlying sockaddr for FFI calls.

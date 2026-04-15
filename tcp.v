@@ -51,6 +51,8 @@ tcp
 
     start(self: _state, h: stream_read::cb): _state
     {
+      mem::merge(self, h);
+
       if !handle::open self._handle
       {
         self._handle = handle::tcp;
@@ -95,7 +97,6 @@ tcp
         return self
       }
 
-      mem::merge(self, h);
       self._on_read = h;
 
       let cb = (data, size) ->

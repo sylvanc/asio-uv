@@ -38,7 +38,7 @@ timer
 
         if !self._active
         {
-          ffi::external.remove
+          ffi::external.remove;
           ffi::unpin self
         }
       }
