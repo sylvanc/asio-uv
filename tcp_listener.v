@@ -23,6 +23,8 @@ tcp_listener
 
     start(self: _state, handler: (_state, tcp)->none): _state
     {
+      mem::merge(self, handler);
+
       if !handle::open self._handle
       {
         self._handle = handle::tcp;
