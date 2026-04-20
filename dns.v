@@ -71,8 +71,8 @@ dns
         handler(array[addr]::fill(0, addr::invalid))
       }
 
-      ffi::unpin :::uv_req_get_data(req);
       ffi::external.remove;
+      ffi::unpin :::uv_req_get_data(req);
       _req::free(req);
     }
 
@@ -88,8 +88,8 @@ dns
         :::uv_default_loop(), req, cb.raw,
         self.host.cstring, self.service.cstring, ffi::ptr) < 0
       {
-        ffi::unpin cb;
         ffi::external.remove;
+        ffi::unpin cb;
         _req::free req;
         handler(array[addr]::fill(0, addr::invalid))
       }

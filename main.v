@@ -123,15 +123,15 @@ main(): none
     let server = tcp_listener(a).start
       (s: tcp_listener::_state, conn: tcp) ->
     {
-      conn.start (conn: stream_read, data: array[u8], size: usize) ->
+      conn.start (s: stream_read, data: array[u8], size: usize) ->
       {
         if size > 0
         {
-          conn.write(data, size)
+          s.write(data, size)
         }
         else
         {
-          conn.close
+          s.close
         }
       }
     }
@@ -139,21 +139,23 @@ main(): none
     let t = timer (t: timer::_state) ->
     {
       let client = tcp(a).start
-        (conn: stream_read, data: array[u8], size: usize) ->
+        (s: stream_read, data: array[u8], size: usize) ->
       {
         if size > 0
         {
           tc.assert(size == 4, "echo should return 4 bytes");
-          conn.close;
+          s.close;
           server.close
         }
         else
         {
-          conn.close
+          s.close
         }
       }
+
       client.write(array[u8]::fill(4, 72))
     }
+
     t 10
   }
 

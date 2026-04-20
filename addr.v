@@ -181,8 +181,8 @@ addr
         handler(dns("", ""))
       }
 
-      ffi::unpin :::uv_req_get_data(req);
       ffi::external.remove;
+      ffi::unpin :::uv_req_get_data(req);
       _req::free req
     }
 
@@ -197,8 +197,8 @@ addr
       if :::uv_getnameinfo(
           :::uv_default_loop(), req, cb.raw, self.raw, 0) < 0
       {
-        ffi::unpin cb;
         ffi::external.remove;
+        ffi::unpin cb;
         _req::free req;
         handler(dns("", ""))
       }
