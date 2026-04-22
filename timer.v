@@ -38,6 +38,7 @@ timer
 
         if !self._active
         {
+          self._close_handle;
           ffi::unpin self;
           ffi::external.remove
         }
@@ -57,6 +58,11 @@ timer
       self._activate true;
       :::uv_timer_start(self._handle, self._cb.raw, timeout, 0);
       self
+    }
+
+    _close_handle(self: _state): none
+    {
+      self._handle = handle::close self._handle
     }
 
     cancel(self: _state): _state
@@ -96,16 +102,13 @@ timer
         }
         else
         {
-          ffi::external.remove;
-          ffi::unpin self
+          self._close_handle;
+          ffi::unpin self;
+          ffi::external.remove
         }
       }
     }
 
-    final(self: _state): none
-    {
-      handle::close self._handle;
-    }
   }
 
   _c: cown[_state];

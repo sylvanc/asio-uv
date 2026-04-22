@@ -2,6 +2,12 @@ use test = "https://github.com/sylvanc/test" "main";
 
 main(): none
 {
+  asio_uv::tests;
+  test.done
+}
+
+tests(): none
+{
   // ===== addr tests =====
 
   (test "addr - create from port") tc ->
@@ -114,6 +120,18 @@ main(): none
     t 0
   }
 
+  (test "timer - cancel rearm") tc ->
+  {
+    var count = 0;
+    let t = timer (t: timer::_state) ->
+    {
+      count = count + 1;
+      tc.assert(count == 1, "should fire exactly once after rearm");
+    }
+    (t 50).cancel;
+    t 10
+  }
+
   // ===== tcp tests =====
 
   (test "tcp - echo") tc ->
@@ -176,5 +194,132 @@ main(): none
     }
   }
 
-  test.done
+  // ===== udp tests =====
+
+  (test "udp - echo") tc ->
+  {
+    let recv_addr = addr("127.0.0.1", 9200);
+    let send_addr = addr("127.0.0.1", 9201);
+
+    let sender = udp send_addr;
+    let receiver = udp(recv_addr).start
+      (u: udp::_state, data: array[u8], size: usize, from: addr) ->
+    {
+      tc.assert(size == 4, "should receive 4 bytes");
+      u.close
+    }
+
+    let t = timer (t: timer::_state) ->
+    {
+      sender.send(array[u8]::fill(4, 42), recv_addr);
+
+      let cleanup = timer (t: timer::_state) ->
+      {
+        sender.close
+      }
+      cleanup 200
+    }
+    t 10
+  }
+
+  // ===== tcp additional tests =====
+
+  (test "tcp - shutdown") tc ->
+  {
+    let a = addr("127.0.0.1", 9124);
+
+    let server = tcp_listener(a).start
+      (s: tcp_listener::_state, conn: tcp) ->
+    {
+      conn.start (s: stream_read, data: array[u8], size: usize) ->
+      {
+        if size > 0
+        {
+          tc.assert(size == 4, "server should receive 4 bytes");
+        }
+
+        s.close
+      }
+    }
+
+    let t = timer (t: timer::_state) ->
+    {
+      let client = tcp(a).start
+        (s: stream_read, data: array[u8], size: usize) ->
+      {
+        s.close;
+        server.close
+      }
+
+      client.write(array[u8]::fill(4, 99));
+      client.shutdown
+    }
+    t 10
+  }
+
+  (test "tcp - connect refused") tc ->
+  {
+    let a = addr("127.0.0.1", 9999);
+
+    let client = tcp(a).start
+      (s: stream_read, data: array[u8], size: usize) ->
+    {
+      tc.assert(size == 0, "connect failure should give size 0");
+      s.close
+    }
+  }
+
+  (test "tcp - options") tc ->
+  {
+    let a = addr("127.0.0.1", 9125);
+
+    let server = tcp_listener(a).start
+      (s: tcp_listener::_state, conn: tcp) ->
+    {
+      conn.nodelay true;
+      conn.keepalive(true, 30);
+      conn.start (s: stream_read, data: array[u8], size: usize) ->
+      {
+        s.close
+      }
+    }
+
+    let t = timer (t: timer::_state) ->
+    {
+      let client = tcp(a).start
+        (s: stream_read, data: array[u8], size: usize) ->
+      {
+        s.close;
+        server.close
+      }
+
+      client.nodelay true;
+      client.keepalive(true, 30);
+      tc.assert(true, "options set without crash");
+      client.close
+    }
+    t 10
+  }
+
+  // ===== timer additional tests =====
+
+  (test "timer - rearm") tc ->
+  {
+    var count = 0;
+
+    let t = timer (t: timer::_state) ->
+    {
+      count = count + 1;
+
+      if count < 2
+      {
+        t 10
+      }
+      else
+      {
+        tc.assert(count == 2, "timer should fire twice");
+      }
+    }
+    t 10
+  }
 }

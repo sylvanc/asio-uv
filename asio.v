@@ -73,19 +73,22 @@ handle
     self != ffi::ptr
   }
 
+  // Synchronous close — call from uv thread (inside _lock::run).
+  // After this returns, no more callbacks will fire on the handle.
   close(self: uv_handle): uv_handle
   {
     if handle::open self
     {
-      _lock::run
-      {
-        :::uv_close(self, handle::_close_cb.raw)
-      }
+      :::uv_close(self, handle::_close_cb.raw)
     }
 
     ffi::ptr
   }
 
+  // Async close — call from finalizers (not on uv thread).
+  // If the uv lock is already held (re-entrant from a _lock::run callback),
+  // calls uv_close directly. Otherwise acquires the uv loop via the
+  // semaphore mechanism first.
   once _close_cb(): ffi::callback[ffi::ptr->none]
   {
     ffi::callback (h: ffi::ptr): none ->

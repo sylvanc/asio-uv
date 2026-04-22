@@ -205,10 +205,6 @@ tcp
       addr::_from_ptr(ffi::ptr buf)
     }
 
-    final(self: _state): none
-    {
-      handle::close self._handle
-    }
   }
 
   _c: cown[_state];
@@ -252,7 +248,7 @@ tcp
 
   keepalive(self: tcp, enable: bool = true, delay: u32 = 30): tcp
   {
-    self._c _lock::run t -> t.keepalive enable delay;
+    self._c _lock::run t -> t.keepalive(enable, delay);
     self
   }
 

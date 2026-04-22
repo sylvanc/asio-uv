@@ -81,6 +81,7 @@ tty
       }
 
       self._handle = handle::close self._handle;
+      self._sigwinch.close;
       ffi::external.remove;
       ffi::unpin self;
       self
@@ -100,11 +101,6 @@ tty
       self
     }
 
-    final(self: _state): none
-    {
-      handle::close self._handle;
-      self._sigwinch.close;
-    }
   }
 
   _c: cown[_state];

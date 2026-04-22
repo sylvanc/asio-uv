@@ -19,7 +19,7 @@ dns
 
   create(host: string, service: string = ""): dns
   {
-    new {host, service}
+    mem::freeze new {host, service}
   }
 
   // Count entries in an addrinfo linked list.

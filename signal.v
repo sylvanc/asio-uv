@@ -69,10 +69,6 @@ signal
       self
     }
 
-    final(self: _state): none
-    {
-      handle::close self._handle
-    }
   }
 
   _c: cown[_state];
