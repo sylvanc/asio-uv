@@ -15,13 +15,11 @@ signal
 
     create(signum: i32): _state
     {
-      let _cb = ffi::callback (handle: uv_handle, signum: i32): none -> {}
-
       new
       {
         _handle = handle,
         _signum = signum,
-        _cb
+        _cb = ffi::callback[(uv_handle, i32)->none]()
       }
     }
 

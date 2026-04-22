@@ -17,8 +17,7 @@ tcp_listener
 
     create(_addr: addr): _state
     {
-      let _cb = ffi::callback (server: uv_handle, status: i32): none -> {}
-      new { _handle = handle, _addr, _cb }
+      new { _handle = handle, _addr, _cb = ffi::callback[(uv_handle, i32)->none]() }
     }
 
     start(self: _state, handler: (_state, tcp)->none): _state

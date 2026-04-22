@@ -159,5 +159,22 @@ main(): none
     t 10
   }
 
+  (test "dns - resolve localhost") tc ->
+  {
+    dns("localhost", "80").resolve (addrs: array[addr]) ->
+    {
+      tc.assert(addrs.size > 0, "localhost should resolve");
+    }
+  }
+
+  (test "addr - resolve") tc ->
+  {
+    let a = addr("127.0.0.1", 80);
+    a.resolve (d: dns) ->
+    {
+      tc.assert(d.host.size > 0, "resolve should return a host");
+    }
+  }
+
   test.done
 }

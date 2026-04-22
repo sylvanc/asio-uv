@@ -60,26 +60,25 @@ tcp
         ffi::pin self;
         ffi::external.add;
 
-        let connect_cb = ffi::callback (req: uv_req, status: i32): none ->
+        let connect_cb = ffi::callback[(uv_req, i32)->none]();
+
+        let wrapper = (req: uv_req, status: i32): none ->
         {
-          ffi::unpin :::uv_req_get_data(req);
           _req::free req;
+          ffi::unpin connect_cb;
 
           if status < 0
           {
-            // Deliver connect failure as a read error.
             h(self, array[u8]::fill 0, 0);
             self.close;
             return
           }
 
-          // Fill in peer addr now that we're connected.
           self._addr = _state::_get_peer self._handle;
-
-          // Start reading.
           self.start h
         }
 
+        connect_cb.bind wrapper;
         mem::merge(self, connect_cb);
         ffi::pin connect_cb;
         let req = _req::connect();
@@ -163,12 +162,16 @@ tcp
         return self
       }
 
-      let cb = ffi::callback (req: uv_req, status: i32): none ->
+      let cb = ffi::callback[(uv_req, i32)->none]();
+
+      let wrapper = (req: uv_req, status: i32): none ->
       {
-        ffi::unpin :::uv_req_get_data(req);
         _req::free req;
+        ffi::unpin cb;
       }
 
+      cb.bind wrapper;
+      mem::merge(self, cb);
       ffi::pin cb;
       let req = _req::shutdown();
       :::uv_req_set_data(req, ffi::ptr cb);

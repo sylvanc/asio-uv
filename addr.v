@@ -166,6 +166,8 @@ addr
   // Reverse-resolve this address to a hostname and service name.
   resolve(self: addr, handler: dns -> none): addr
   {
+    let cb = ffi::callback[(uv_req, i32, ffi::ptr, ffi::ptr)->none]();
+
     let wrapper =
       (req: uv_req, status: i32,
        hostname: ffi::ptr, service: ffi::ptr): none ->
@@ -181,14 +183,15 @@ addr
         handler(dns("", ""))
       }
 
+      ffi::unpin cb;
       ffi::external.remove;
-      ffi::unpin :::uv_req_get_data(req);
       _req::free req
     }
 
+    cb.bind wrapper;
+
     _lock::run
     {
-      let cb = ffi::callback wrapper;
       let req = _req::getnameinfo();
       :::uv_req_set_data(req, ffi::ptr cb);
       ffi::pin cb;
@@ -197,8 +200,8 @@ addr
       if :::uv_getnameinfo(
           :::uv_default_loop(), req, cb.raw, self.raw, 0) < 0
       {
-        ffi::external.remove;
         ffi::unpin cb;
+        ffi::external.remove;
         _req::free req;
         handler(dns("", ""))
       }

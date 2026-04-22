@@ -19,7 +19,7 @@ timer
       let self = new
       {
         _handle = handle,
-        _cb = (ffi::callback (handle: ffi::ptr): none -> {}),
+        _cb = ffi::callback[ffi::ptr->none](),
         _active = false,
         _in_handler = false
       }
@@ -38,8 +38,8 @@ timer
 
         if !self._active
         {
-          ffi::external.remove;
-          ffi::unpin self
+          ffi::unpin self;
+          ffi::external.remove
         }
       }
 

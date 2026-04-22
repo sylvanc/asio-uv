@@ -36,9 +36,7 @@ udp
         _uv_buf_type.store[usize](buf, 1, suggested_size.usize)
       }
 
-      let _rcb = ffi::callback
-        (handle: uv_handle, nread: isize, buf: uv_buf,
-         sa: ffi::ptr, flags: u32): none -> {}
+      let _rcb = ffi::callback[(uv_handle, isize, uv_buf, ffi::ptr, u32)->none]();
 
       let _wcb = ffi::callback (req: uv_req, status: i32): none ->
       {

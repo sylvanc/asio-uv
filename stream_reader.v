@@ -20,7 +20,7 @@ _stream_reader
     {
       // Every alloc_cb call has a read_cb call, but not vice versa.
       let data = array[u8]::fill(suggested_size.usize);
-      ffi::pin(data);
+      ffi::pin data;
       _uv_buf_type.store[array[u8]](buf, 0, data);
       _uv_buf_type.store[usize](buf, 1, suggested_size.usize);
     }
@@ -48,7 +48,7 @@ _stream_reader
       }
 
       let data = _uv_buf_type.load[array[u8]](buf, 0);
-      ffi::unpin(data);
+      ffi::unpin data;
 
       if nread > 0
       {

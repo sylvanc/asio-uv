@@ -58,6 +58,8 @@ dns
 
   resolve(self: dns, handler: array[addr]->none): dns
   {
+    let cb = ffi::callback[(ffi::ptr, i32, ffi::ptr)->none]();
+
     let wrapper = (req: ffi::ptr, status: i32, res: ffi::ptr): none ->
     {
       if status == 0
@@ -71,14 +73,15 @@ dns
         handler(array[addr]::fill(0, addr::invalid))
       }
 
+      ffi::unpin cb;
       ffi::external.remove;
-      ffi::unpin :::uv_req_get_data(req);
       _req::free(req);
     }
 
+    cb.bind wrapper;
+
     _lock::run
     {
-      let cb = ffi::callback wrapper;
       let req = _req::getaddrinfo();
       :::uv_req_set_data(req, ffi::ptr cb);
       ffi::pin cb;
@@ -88,8 +91,8 @@ dns
         :::uv_default_loop(), req, cb.raw,
         self.host.cstring, self.service.cstring, ffi::ptr) < 0
       {
-        ffi::external.remove;
         ffi::unpin cb;
+        ffi::external.remove;
         _req::free req;
         handler(array[addr]::fill(0, addr::invalid))
       }

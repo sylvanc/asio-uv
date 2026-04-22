@@ -17,9 +17,8 @@ file
 
     create(_fd: i32): _state
     {
-      let _cb = ffi::callback (req: uv_req): none -> {}
       let _on_read = (s: stream_read, data: array[u8], size: usize): none -> {}
-      new {_fd, _on_read, _cb}
+      new {_fd, _on_read, _cb = ffi::callback[(uv_req)->none]()}
     }
 
     start(self: _state, h: stream_read::cb): _state
