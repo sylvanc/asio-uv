@@ -194,7 +194,7 @@ tcp
 
     _get_peer(h: uv_handle): addr
     {
-      let buf = array[u8]::fill(128);
+      let buf = array[u8]::alloc(128);
       let len = i32 128;
 
       if :::uv_tcp_getpeername(h, buf, ffi::ptr len) < 0

@@ -19,7 +19,7 @@ _stream_reader
       (handle: uv_handle, suggested_size: i32, buf: uv_buf): none ->
     {
       // Every alloc_cb call has a read_cb call, but not vice versa.
-      let data = array[u8]::fill(suggested_size.usize);
+      let data = array[u8]::alloc(suggested_size.usize);
       ffi::pin data;
       _uv_buf_type.store[array[u8]](buf, 0, data);
       _uv_buf_type.store[usize](buf, 1, suggested_size.usize);

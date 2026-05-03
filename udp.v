@@ -30,7 +30,7 @@ udp
       let _acb = ffi::callback
         (handle: uv_handle, suggested_size: i32, buf: uv_buf): none ->
       {
-        let data = array[u8]::fill(suggested_size.usize);
+        let data = array[u8]::alloc(suggested_size.usize);
         ffi::pin data;
         _uv_buf_type.store[array[u8]](buf, 0, data);
         _uv_buf_type.store[usize](buf, 1, suggested_size.usize)

@@ -88,7 +88,7 @@ file
         return self
       }
 
-      let data = array[u8]::fill 4096;
+      let data = array[u8]::alloc 4096;
       ffi::pin data;
 
       let buf = _uv_buf_type.alloc();

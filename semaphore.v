@@ -22,7 +22,7 @@ _semaphore
 
   create(count: u32): _semaphore
   {
-    let _handle = array[u8]::fill(32); // sizeof(uv_sem_t)
+    let _handle = array[u8]::alloc(32); // sizeof(uv_sem_t)
     :::uv_sem_init(_handle, count);
     new {_handle}
   }

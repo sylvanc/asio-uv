@@ -41,13 +41,13 @@ addr
 
     if family == 2
     {
-      let _data = array[u8]::fill(16);
+      let _data = array[u8]::alloc(16);
       :::memcpy(_data, sa, 16);
       mem::freeze new {_data}
     }
     else if family == 10
     {
-      let _data = array[u8]::fill(28);
+      let _data = array[u8]::alloc(28);
       :::memcpy(_data, sa, 28);
       mem::freeze new {_data}
     }
@@ -60,7 +60,7 @@ addr
   // Create from IP string and port. Auto-detects IPv4 vs IPv6.
   create(ip: string, port: u16): addr
   {
-    let _data = array[u8]::fill(28);
+    let _data = array[u8]::alloc(28);
     let cs = ip.cstring;
 
     if :::uv_ip4_addr(cs, port.i32, ffi::ptr _data) == 0
@@ -85,7 +85,7 @@ addr
   // Create an IPv4 address from an IP string and port.
   ip4(ip: string, port: u16): addr
   {
-    let _data = array[u8]::fill(16);
+    let _data = array[u8]::alloc(16);
 
     if :::uv_ip4_addr(ip.cstring, port.i32, ffi::ptr _data) == 0
     {
@@ -104,7 +104,7 @@ addr
   // Create an IPv6 address from an IP string and port.
   ip6(ip: string, port: u16): addr
   {
-    let _data = array[u8]::fill(28);
+    let _data = array[u8]::alloc(28);
 
     if :::uv_ip6_addr(ip.cstring, port.i32, ffi::ptr _data) == 0
     {
@@ -143,7 +143,7 @@ addr
   // Get the IP address as a string.
   ip(self: addr): string
   {
-    let buf = array[u8]::fill(64);
+    let buf = array[u8]::alloc(64);
 
     if self.family == 2
     {

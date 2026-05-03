@@ -18,7 +18,7 @@ _loop
 
   once create(): _loop
   {
-    let _handle = array[u8]::fill(:::platform_thread_size());
+    let _handle = array[u8]::alloc(:::platform_thread_size());
     let _cb = ffi::callback (arg: ffi::ptr): none ->
     {
       :::uv_run(:::uv_default_loop(), 0); // UV_RUN_DEFAULT
