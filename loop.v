@@ -16,7 +16,7 @@ _loop
   _handle: array[u8];
   _cb: ffi::callback[ffi::ptr->none];
 
-  once create(): _loop
+  create(): _loop
   {
     let _handle = array[u8]::fill(:::platform_thread_size());
     let _cb = ffi::callback (arg: ffi::ptr): none ->

@@ -1,10 +1,23 @@
-use "libuv.so"
-{
-  uv_write = "uv_write"(uv_req, uv_handle, uv_buf, i32, ffi::ptr): i32;
-}
-
 _stream_writer
 {
+  use "libuv.so"
+  {
+    uv_write = "uv_write"(uv_req, uv_handle, uv_buf, i32, ffi::ptr): i32;
+
+    init(): ()->none
+    {
+      // Ignore SIGPIPE so writing to a stream whose peer has closed reports an
+      // error through the write callback instead of terminating the process.
+      // The watcher is unref'ed so it does not keep the event loop alive.
+      let sigpipe = signal(13, {}).unref; // SIGPIPE
+
+      {
+        sigpipe.close;
+        none
+      }
+    }
+  }
+
   use write_cb = ffi::callback[(uv_req, i32)->none];
 
   cb: write_cb;
