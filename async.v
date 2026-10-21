@@ -1,40 +1,73 @@
-use "libuv.so"
-{
-  uv_async_init = "uv_async_init"(ffi::ptr, uv_handle, ffi::ptr): i32;
-  uv_async_send = "uv_async_send"(uv_handle): i32;
-  uv_unref = "uv_unref"(ffi::ptr): none;
-  uv_stop = "uv_stop"(uv_handle): none;
-}
-
 _async
 {
+  use "libuv.so"
+  {
+    uv_async_init = "uv_async_init"(ffi::ptr, uv_handle, ffi::ptr): i32;
+    uv_async_send = "uv_async_send"(uv_handle): i32;
+    uv_close = "uv_close"(uv_handle, ffi::ptr): none;
+    uv_unref = "uv_unref"(ffi::ptr): none;
+    uv_stop = "uv_stop"(uv_handle): none;
+  }
+
+  _bootstrap
+  {
+    use
+    {
+      malloc = "malloc"(usize): ffi::ptr;
+    }
+
+    use "libuv.so"
+    {
+      uv_default_loop = "uv_default_loop"(): ffi::ptr;
+      uv_handle_size = "uv_handle_size"(i32): usize;
+      uv_async_init = "uv_async_init"(ffi::ptr, uv_handle, ffi::ptr): i32;
+      uv_unref = "uv_unref"(ffi::ptr): none;
+    }
+
+    _create(cb: ffi::ptr): uv_handle
+    {
+      let handle = :::malloc(:::uv_handle_size(1)); // UV_ASYNC
+      :::uv_async_init(:::uv_default_loop(), handle, cb);
+      handle
+    }
+
+    create(cb: ffi::ptr): uv_handle
+    {
+      let handle = _bootstrap::_create(cb);
+      :::uv_unref(handle);
+      handle
+    }
+
+    create_ref(cb: ffi::ptr): uv_handle
+    {
+      _bootstrap::_create(cb)
+    }
+  }
+
   _handle: uv_handle;
   _cb: ffi::callback[ffi::ptr->none];
 
   once create(): _async
   {
-    let _handle = handle::async;
     let _cb = ffi::callback (handle: ffi::ptr): none ->
     {
       _semaphore::runtime.post;
       _semaphore::loop.wait;
     }
 
-    :::uv_async_init(:::uv_default_loop(), _handle, _cb.raw);
-    :::uv_unref(_handle);
+    let _handle = _bootstrap(_cb.raw);
     new {_handle, _cb}
   }
 
   once shutdown(): _async
   {
-    let _handle = handle::async;
-    let _cb = ffi::callback (handle: ffi::ptr): none ->
+    let _cb = ffi::callback (h: ffi::ptr): none ->
     {
-      _async::shutdown._close;
+      :::uv_close(h, handle::_close_cb.raw);
       _async._close
     }
 
-    :::uv_async_init(:::uv_default_loop(), _handle, _cb.raw);
+    let _handle = _bootstrap::create_ref(_cb.raw);
     new {_handle, _cb}
   }
 

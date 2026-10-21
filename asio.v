@@ -14,14 +14,13 @@ use "libuv.so"
 
   init(): ()->none
   {
-    // Block SIGPIPE without keeping the watcher loop-ref'ed.
-    signal(13, {}).unref; // SIGPIPE
+    let loop = _loop::create();
 
     // Return a fini lambda.
     {
       :::uv_tty_reset_mode();
       _async::shutdown.send;
-      _loop.join;
+      loop.join;
     }
   }
 }
